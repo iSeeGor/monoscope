@@ -1,5 +1,27 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Rule:
+    """Кастомне правило категоризації.
+
+    Матчить за підрядком у description (без урахування регістру) та,
+    опційно, за MCC. Порожній mcc = будь-який MCC.
+    """
+
+    category: str
+    description: str
+    mcc: frozenset[int] = frozenset()
+
+
+CUSTOM_RULES: list[Rule] = [
+    Rule(category="Підписки та AI", description="google", mcc=frozenset({7399})),
+    Rule(category="Підписки та AI", description="openai"),
+    Rule(category="Підписки та AI", description="claude"),
+]
+
 MCC_CATEGORIES: dict[int, str] = {
     5411: "Продукти",
     5422: "Продукти",
@@ -28,7 +50,7 @@ MCC_CATEGORIES: dict[int, str] = {
     5732: "Електроніка",
     5045: "Електроніка",
     5734: "Електроніка",
-    5945: "Електроніка",
+    5945: "Хобі та іграшки",
     5946: "Камери",
     5311: "Одяг та взуття",
     5651: "Одяг та взуття",
@@ -93,6 +115,7 @@ MCC_CATEGORIES: dict[int, str] = {
     5970: "Краса",
     5977: "Краса",
     5997: "Краса",
+    9311: "Податкові платежі",
     5992: "Квіти",
     5999: "Інше",
     7392: "Інше",
@@ -105,3 +128,18 @@ def category_for_mcc(mcc: int | None) -> str:
     if mcc is None:
         return "Інше"
     return MCC_CATEGORIES.get(mcc, "Інше")
+
+
+def categorize(mcc: int | None, description: str) -> str:
+    """Категорія за кастомними правилами, з фолбеком на мапінг MCC.
+
+    Правила перевіряються по порядку — перше збіглося перемагає.
+    """
+    desc = description.casefold()
+    for rule in CUSTOM_RULES:
+        if rule.mcc and mcc not in rule.mcc:
+            continue
+        if rule.description not in desc:
+            continue
+        return rule.category
+    return category_for_mcc(mcc)

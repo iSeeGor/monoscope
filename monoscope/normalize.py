@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from monoscope.categories import category_for_mcc
+from monoscope.categories import categorize
 from monoscope.config import CURRENCY_CODES
 from monoscope.rates import RateLookup, RateSource, kyiv_date
 
@@ -136,7 +136,7 @@ def _normalize_item(item: dict[str, Any], rates: RateLookup) -> Expense:
         description=str(item.get("description", "")),
         comment=str(item.get("comment", "") or ""),
         mcc=item.get("mcc"),
-        category=category_for_mcc(item.get("mcc")),
+        category=categorize(item.get("mcc"), str(item.get("description", ""))),
         amount_original=round(amount_original, 2),
         currency_original=currency,
         amount_eur=round(amount_eur, 2),
