@@ -18,8 +18,8 @@ class Rule:
 
 CUSTOM_RULES: list[Rule] = [
     Rule(category="Підписки та AI", description="google", mcc=frozenset({7399})),
-    Rule(category="Підписки та AI", description="openai"),
-    Rule(category="Підписки та AI", description="claude"),
+    Rule(category="Підписки та AI", description="openai", mcc=frozenset({5734})),
+    Rule(category="Підписки та AI", description="claude", mcc=frozenset({5734})),
 ]
 
 MCC_CATEGORIES: dict[int, str] = {
