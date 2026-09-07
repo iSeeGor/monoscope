@@ -1,0 +1,531 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Monoscope API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Create Report",
+        "operationId": "create_report_api_v1_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}/export.csv": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Export Csv",
+        "operationId": "export_csv_api_v1_reports__report_id__export_csv_get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}/export.md": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Export Markdown",
+        "operationId": "export_markdown_api_v1_reports__report_id__export_md_get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CategorySummaryResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "totalUah": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaluah"
+          },
+          "totalEur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaleur"
+          },
+          "sharePct": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Sharepct"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "totalUah",
+          "totalEur",
+          "sharePct",
+          "count"
+        ],
+        "title": "CategorySummaryResponse"
+      },
+      "DailySummaryResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "totalUah": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaluah"
+          },
+          "totalEur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaleur"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "totalUah",
+          "totalEur",
+          "count"
+        ],
+        "title": "DailySummaryResponse"
+      },
+      "ExpenseResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurredat"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment"
+          },
+          "mcc": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mcc"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "amountOriginal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amountoriginal"
+          },
+          "currencyOriginal": {
+            "type": "string",
+            "title": "Currencyoriginal"
+          },
+          "amountUah": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amountuah"
+          },
+          "amountEur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amounteur"
+          },
+          "rateUsed": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rateused"
+          },
+          "rateSource": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "operation",
+                  "nbu",
+                  "monobank"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratesource"
+          },
+          "hold": {
+            "type": "boolean",
+            "title": "Hold"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "occurredAt",
+          "description",
+          "comment",
+          "mcc",
+          "category",
+          "amountOriginal",
+          "currencyOriginal",
+          "amountUah",
+          "amountEur",
+          "rateUsed",
+          "rateSource",
+          "hold"
+        ],
+        "title": "ExpenseResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "HealthResponse"
+      },
+      "ReportMeta": {
+        "properties": {
+          "cardType": {
+            "type": "string",
+            "title": "Cardtype"
+          },
+          "dateFrom": {
+            "type": "string",
+            "format": "date",
+            "title": "Datefrom"
+          },
+          "dateTo": {
+            "type": "string",
+            "format": "date",
+            "title": "Dateto"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generatedat"
+          },
+          "transactionCount": {
+            "type": "integer",
+            "title": "Transactioncount"
+          },
+          "pendingCount": {
+            "type": "integer",
+            "title": "Pendingcount"
+          },
+          "totalUah": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaluah"
+          },
+          "totalEur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Totaleur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cardType",
+          "dateFrom",
+          "dateTo",
+          "generatedAt",
+          "transactionCount",
+          "pendingCount",
+          "totalUah",
+          "totalEur"
+        ],
+        "title": "ReportMeta"
+      },
+      "ReportRequest": {
+        "properties": {
+          "cardType": {
+            "type": "string",
+            "enum": [
+              "white",
+              "black"
+            ],
+            "title": "Cardtype",
+            "default": "white"
+          },
+          "dateFrom": {
+            "type": "string",
+            "format": "date",
+            "title": "Datefrom"
+          },
+          "dateTo": {
+            "type": "string",
+            "format": "date",
+            "title": "Dateto"
+          },
+          "includeHolds": {
+            "type": "boolean",
+            "title": "Includeholds",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "title": "ReportRequest"
+      },
+      "ReportResponse": {
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "title": "Reportid"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ReportMeta"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySummaryResponse"
+            },
+            "type": "array",
+            "title": "Categories"
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/DailySummaryResponse"
+            },
+            "type": "array",
+            "title": "Daily"
+          },
+          "expenses": {
+            "items": {
+              "$ref": "#/components/schemas/ExpenseResponse"
+            },
+            "type": "array",
+            "title": "Expenses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reportId",
+          "cached",
+          "meta",
+          "categories",
+          "daily",
+          "expenses"
+        ],
+        "title": "ReportResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

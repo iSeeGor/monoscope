@@ -140,10 +140,9 @@ All handled errors use:
 
 Expected status mapping:
 
-- `400 VALIDATION_ERROR` for cross-field input failures;
 - `401 MONOBANK_UNAUTHORIZED` for an invalid configured token;
 - `404 REPORT_NOT_FOUND` for an unknown or expired export report;
-- `422 REQUEST_SCHEMA_INVALID` for malformed request fields;
+- `422 REQUEST_SCHEMA_INVALID` for malformed fields or invalid date ranges;
 - `429 MONOBANK_RATE_LIMITED` for upstream request limits;
 - `502 MONOBANK_UNAVAILABLE` for upstream failures;
 - `500 INTERNAL_ERROR` for unexpected failures.

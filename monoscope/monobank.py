@@ -19,6 +19,14 @@ class MonobankError(Exception):
     pass
 
 
+class MonobankUnauthorizedError(MonobankError):
+    pass
+
+
+class MonobankRateLimitError(MonobankError):
+    pass
+
+
 class MonobankClient:
     def __init__(self, token: str) -> None:
         self._token = token
@@ -81,9 +89,11 @@ class MonobankClient:
             raise MonobankError(f"Request failed: {exc}") from exc
 
         if response.status_code == 429:
-            raise MonobankError("Rate limit exceeded. Wait 60 seconds and retry.")
+            raise MonobankRateLimitError(
+                "Rate limit exceeded. Wait 60 seconds and retry."
+            )
         if response.status_code == 401:
-            raise MonobankError("Unauthorized. Check MONOBANK_TOKEN.")
+            raise MonobankUnauthorizedError("Unauthorized. Check MONOBANK_TOKEN.")
         if not response.ok:
             raise MonobankError(
                 f"Monobank API error {response.status_code}: {response.text.strip()}"

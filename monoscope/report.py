@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import io
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -184,9 +185,7 @@ def write_markdown_report(
     return path
 
 
-def write_csv(expenses: list[Expense], path: Path) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-
+def format_csv(expenses: list[Expense]) -> str:
     fieldnames = [
         "date",
         "time",
@@ -203,29 +202,35 @@ def write_csv(expenses: list[Expense], path: Path) -> Path:
         "id",
     ]
 
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for expense in expenses:
-            dt = datetime.fromtimestamp(expense.time, tz=KYIV)
-            writer.writerow(
-                {
-                    "date": dt.strftime("%Y-%m-%d"),
-                    "time": dt.strftime("%H:%M:%S"),
-                    "description": expense.description,
-                    "comment": expense.comment,
-                    "category": expense.category,
-                    "mcc": expense.mcc or "",
-                    "amount_original": f"{expense.amount_original:.2f}",
-                    "currency_original": expense.currency_original,
-                    "amount_eur": f"{expense.amount_eur:.2f}",
-                    "rate_used": (
-                        f"{expense.rate_used:.4f}" if expense.rate_used is not None else ""
-                    ),
-                    "rate_source": expense.rate_source or "",
-                    "hold": "true" if expense.hold else "false",
-                    "id": expense.id,
-                }
-            )
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for expense in expenses:
+        dt = datetime.fromtimestamp(expense.time, tz=KYIV)
+        writer.writerow(
+            {
+                "date": dt.strftime("%Y-%m-%d"),
+                "time": dt.strftime("%H:%M:%S"),
+                "description": expense.description,
+                "comment": expense.comment,
+                "category": expense.category,
+                "mcc": expense.mcc or "",
+                "amount_original": f"{expense.amount_original:.2f}",
+                "currency_original": expense.currency_original,
+                "amount_eur": f"{expense.amount_eur:.2f}",
+                "rate_used": (
+                    f"{expense.rate_used:.4f}" if expense.rate_used is not None else ""
+                ),
+                "rate_source": expense.rate_source or "",
+                "hold": "true" if expense.hold else "false",
+                "id": expense.id,
+            }
+        )
+    return output.getvalue()
+
+
+def write_csv(expenses: list[Expense], path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(format_csv(expenses), encoding="utf-8")
 
     return path
