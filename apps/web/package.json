@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "types:api": "openapi-typescript ../../contracts/openapi.json -o src/shared/api/schema.d.ts",
     "preview": "vite preview"
   },

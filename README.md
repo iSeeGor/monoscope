@@ -1,19 +1,51 @@
 # monoscope (МоноАналіз)
 
-CLI для витягнення й аналізу витрат з Monobank: конвертація в EUR за курсом НБУ, групування по категоріях і експорт у CSV + Markdown.
+Локальний застосунок для аналізу витрат Monobank: FastAPI + React dashboard,
+CLI, конвертація в EUR за курсом НБУ, категоризація та експорт CSV/Markdown.
+
+Потрібні Python 3.11+ і Node.js 22+.
 
 ## Встановлення
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e '.[api,dev]'
 
 cp .env.example .env
 # додай MONOBANK_TOKEN з https://api.monobank.ua/
+
+npm install --prefix apps/web
+npm run types:api --prefix apps/web
 ```
 
-## Запуск
+Якщо локально немає Python 3.11+, середовище можна створити через
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+uv venv --python 3.12
+uv pip install -e '.[api,dev]'
+```
+
+## Web UI
+
+Запусти backend і frontend у двох терміналах:
+
+```bash
+.venv/bin/uvicorn apps.api.monoscope_api.main:create_app \
+  --factory --reload --host 127.0.0.1 --port 8000
+```
+
+```bash
+npm run dev --prefix apps/web
+```
+
+Відкрий `http://127.0.0.1:5173`. Токен читає лише backend із `.env`;
+frontend його не отримує.
+
+API-документація доступна на `http://127.0.0.1:8000/docs`.
+
+## CLI
 
 ```bash
 python -m monoscope
@@ -121,3 +153,17 @@ CUSTOM_RULES: list[Rule] = [
 - Не частіше **1 запит на 60 секунд** — при `429` зачекай хвилину і повтори. Для періодів >31 дня між запитами пауза ~61 с.
 - Свіжі операції можуть зʼявитися в API із затримкою.
 - Якщо витрата є в застосунку, але немає в API — перевір `CARD_TYPE` (біла / чорна картка).
+
+## Перевірки для розробки
+
+```bash
+.venv/bin/python -m ruff check .
+.venv/bin/python -m pytest
+npm run lint --prefix apps/web
+npm run test --prefix apps/web
+npm run test:e2e --prefix apps/web
+npm run build --prefix apps/web
+```
+
+Архітектурні та продуктові рішення зберігаються в `docs/`, а постійні
+інструкції для агентів — у `.cursor/rules/`.

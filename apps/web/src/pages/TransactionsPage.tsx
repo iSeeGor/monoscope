@@ -6,6 +6,7 @@ import {
   filterFn_includesString,
   globalFilteringFeature,
   rowSortingFeature,
+  sortFn_alphanumeric,
   tableFeatures,
   useTable,
 } from '@tanstack/react-table'
@@ -22,6 +23,7 @@ const features = tableFeatures({
   filteredRowModel: createFilteredRowModel(),
   filterFns: { includesString: filterFn_includesString },
   rowSortingFeature,
+  sortFns: { alphanumeric: sortFn_alphanumeric },
   sortedRowModel: createSortedRowModel(),
 })
 const helper = createColumnHelper<typeof features, Expense>()
