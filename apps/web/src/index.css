@@ -136,6 +136,10 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
 .category-chart { height: 310px; }
 .chart-alternative { margin-top: 8px; color: var(--muted-foreground); font-size: 12px; }
 .chart-alternative p { margin: 4px 0; }
+.chart-tooltip { display: grid; gap: 2px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-raised); box-shadow: 0 8px 22px rgb(6 11 20 / 12%); font-variant-numeric: tabular-nums; }
+.chart-tooltip span { color: var(--muted-foreground); font-size: 11px; }
+.chart-tooltip strong { font-size: 13px; }
+.chart-tooltip small { color: var(--muted-foreground); font-size: 11px; }
 .recent { padding: 20px; }
 .expense-rows { display: grid; }
 .expense-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 110px 145px; gap: 12px; align-items: center; width: 100%; padding: 13px 16px; border: 0; border-bottom: 1px solid var(--border); background: transparent; text-align: left; }
