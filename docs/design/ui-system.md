@@ -97,6 +97,7 @@ Project-owned primitives:
 - `ReportState`;
 - `ExpenseTable`;
 - `ExpenseList`;
+- `ExpenseTotals`;
 - `ExpenseDetailsSheet`.
 
 Page components compose these primitives but do not contain chart

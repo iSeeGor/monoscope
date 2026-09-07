@@ -8,7 +8,10 @@ alwaysApply: true
 - Read the relevant documents in `docs/` before changing behavior.
 - Preserve the existing CLI unless a task explicitly changes it.
 - Python is the source of truth for financial calculations; never duplicate
-  normalization, exchange-rate, category, or summary logic in the frontend.
+  normalization, exchange-rate, category, or report summary logic in the
+  frontend. The single exception is adding up server-computed transaction
+  amounts to total a locally filtered list, which must go through
+  `shared/money.ts`; see `docs/architecture/web-app.md`.
 - Keep the Monobank token server-side. Never expose it through Vite variables,
   URLs, responses, logs, fixtures, screenshots, or committed files.
 - Keep changes within the current roadmap phase and avoid speculative features.

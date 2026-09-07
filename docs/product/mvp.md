@@ -45,6 +45,8 @@ is no registration, remote account, or shared workspace in the MVP.
 
 - searchable description and comment;
 - category and status filters;
+- UAH and EUR total plus operation count for the transactions left by the
+  current filters;
 - date and amount sorting;
 - responsive table on desktop;
 - compact cards or rows on small screens;

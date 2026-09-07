@@ -174,6 +174,24 @@ Security rules:
 - Any future migration from floats to `Decimal` must be guarded by report
   parity fixtures.
 
+### Locally filtered subtotals
+
+Transaction search, category, card, and status filters run in the browser and
+must not refetch the report, so the server cannot know which rows are visible.
+The frontend is therefore allowed to add up the per-transaction `amountUah` and
+`amountEur` values the API already computed, for that visible subset only.
+
+- Summation lives in one shared helper, `apps/web/src/shared/money.ts`, and is
+  performed in integer cents. Amounts arrive as two-digit decimal strings, so a
+  subtotal equals the total the Python service reports for the same
+  transactions.
+- This is the only arithmetic the frontend performs on money. Normalization,
+  exchange rates, categorization, and every report-level summary stay in
+  Python.
+- An endpoint that recomputes subtotals per filter change was rejected: it
+  would contradict the local-filter rule in `docs/design/ui-system.md` and add
+  a network round trip to every keystroke for no accuracy gain.
+
 ## Observability and errors
 
 Use structured logs containing request ID, route, duration, cache result, and
