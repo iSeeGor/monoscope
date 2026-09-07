@@ -6,9 +6,9 @@ import click
 
 from monoscope.config import load_config
 from monoscope.monobank import MonobankClient, MonobankError
-from monoscope.normalize import normalize_expenses
 from monoscope.rates import RateLookup
 from monoscope.report import format_cli_report, write_csv, write_markdown_report
+from monoscope.service import ReportParams, ReportService
 
 
 @click.command()
@@ -33,18 +33,22 @@ def main(csv_path: Path | None, md_path: Path | None) -> None:
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    client = MonobankClient(config.token)
+    service = ReportService(MonobankClient(config.token), RateLookup())
+    params = ReportParams(
+        card_type=config.card_type,
+        from_timestamp=config.from_unix,
+        to_timestamp=config.to_unix,
+        include_holds=config.include_holds,
+        report_label=config.report_label,
+        report_title=config.report_title,
+    )
 
     try:
-        account = client.find_account(config.card_type)
-        items = client.get_statement_range(
-            account["id"], config.from_unix, config.to_unix
-        )
+        report = service.generate(params)
     except MonobankError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    rates = RateLookup()
-    expenses = normalize_expenses(items, rates, include_holds=config.include_holds)
+    expenses = report.expenses
 
     click.echo(
         format_cli_report(
