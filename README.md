@@ -44,6 +44,8 @@ npm run dev --prefix apps/web
 frontend його не отримує.
 
 API-документація доступна на `http://127.0.0.1:8000/docs`.
+Запит звіту приймає `cardTypes`: `["white"]`, `["black"]` або
+`["white", "black"]`; за замовчуванням використовується `["white"]`.
 
 ## CLI
 

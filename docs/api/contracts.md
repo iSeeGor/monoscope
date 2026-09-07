@@ -31,7 +31,7 @@ Request:
 
 ```json
 {
-  "includeBlackCard": false,
+  "cardTypes": ["white"],
   "dateFrom": "2026-09-01",
   "dateTo": "2026-09-30",
   "includeHolds": true
@@ -40,8 +40,10 @@ Request:
 
 Validation:
 
-- white-card expenses are always included;
-- `includeBlackCard` defaults to `false` and adds black-card expenses when true;
+- `cardTypes` accepts exactly `["white"]`, `["black"]`, or
+  `["white", "black"]` and defaults to `["white"]`;
+- an empty list, duplicate values, and unknown card types are rejected;
+- card scope is canonicalized to white before black regardless of request order;
 - both dates are required and inclusive;
 - `dateFrom` is not after `dateTo`;
 - range is no longer than 31 inclusive days;
@@ -104,7 +106,8 @@ Response:
 
 Expense order is ascending by occurrence time in the transport contract.
 Frontend views may display a derived descending order.
-For combined reports, `meta.cardTypes` is `["white", "black"]`; every expense
+`meta.cardTypes` reports the actual canonical card scope. For combined reports
+it is `["white", "black"]`; black-only reports use `["black"]`. Every expense
 identifies its source card through `cardType`.
 
 ## Export completed report

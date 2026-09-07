@@ -30,9 +30,8 @@ def build_params(request: ReportRequest, now: datetime | None = None) -> ReportP
     end = min(requested_end, current) if request.date_to == current.date() else requested_end
     report_label = f"{request.date_from.isoformat()}_{request.date_to.isoformat()}"
     report_title = f"{request.date_from.isoformat()} — {request.date_to.isoformat()}"
-    card_types = ("white", "black") if request.include_black_card else ("white",)
     return ReportParams(
-        card_types=card_types,
+        card_types=tuple(request.card_types),
         from_timestamp=int(start.timestamp()),
         to_timestamp=int(end.timestamp()),
         include_holds=request.include_holds,

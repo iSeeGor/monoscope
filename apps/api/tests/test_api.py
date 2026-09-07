@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 
 from apps.api.monoscope_api.cache import ReportCache
@@ -129,6 +130,26 @@ def test_report_response_is_cached_and_uses_camel_case(tmp_path: Path) -> None:
     assert service.calls == 1
 
 
+def test_black_only_report_uses_requested_scope(tmp_path: Path) -> None:
+    resolved = settings(tmp_path)
+    service = FakeReportService()
+    app = create_app(
+        settings=resolved,
+        report_service=service,  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+
+    response = TestClient(app).post(
+        "/api/v1/reports",
+        json={**report_payload(), "cardTypes": ["black"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["meta"]["cardTypes"] == ["black"]
+    assert response.json()["meta"]["totalUah"] == "400.00"
+    assert [item["cardType"] for item in response.json()["expenses"]] == ["black"]
+
+
 def test_exports_use_cached_report_without_regeneration(tmp_path: Path) -> None:
     resolved = settings(tmp_path)
     service = FakeReportService()
@@ -230,7 +251,7 @@ def test_missing_export_returns_stable_not_found_error(tmp_path: Path) -> None:
     assert response.json()["error"]["code"] == "REPORT_NOT_FOUND"
 
 
-def test_combined_report_has_both_sources_and_separate_cache_entry(
+def test_combined_report_has_canonical_scope_and_cache_key(
     tmp_path: Path,
 ) -> None:
     resolved = settings(tmp_path)
@@ -245,7 +266,11 @@ def test_combined_report_has_both_sources_and_separate_cache_entry(
     white = client.post("/api/v1/reports", json=report_payload())
     combined = client.post(
         "/api/v1/reports",
-        json={**report_payload(), "includeBlackCard": True},
+        json={**report_payload(), "cardTypes": ["black", "white"]},
+    )
+    reordered = client.post(
+        "/api/v1/reports",
+        json={**report_payload(), "cardTypes": ["white", "black"]},
     )
 
     assert white.status_code == 200
@@ -258,6 +283,10 @@ def test_combined_report_has_both_sources_and_separate_cache_entry(
         "black",
     ]
     assert combined.json()["reportId"] != white.json()["reportId"]
+    assert reordered.status_code == 200
+    assert reordered.json()["cached"] is True
+    assert reordered.json()["reportId"] == combined.json()["reportId"]
+    assert reordered.json()["meta"]["cardTypes"] == ["white", "black"]
     assert service.calls == 2
 
 
@@ -270,7 +299,7 @@ def test_black_failure_does_not_cache_partial_report(tmp_path: Path) -> None:
         report_cache=ReportCache(resolved.db_path, 60),
     )
     client = TestClient(app, raise_server_exceptions=False)
-    payload = {**report_payload(), "includeBlackCard": True}
+    payload = {**report_payload(), "cardTypes": ["white", "black"]}
 
     failed = client.post("/api/v1/reports", json=payload)
     succeeded = client.post("/api/v1/reports", json=payload)
@@ -282,7 +311,19 @@ def test_black_failure_does_not_cache_partial_report(tmp_path: Path) -> None:
     assert service.calls == 2
 
 
-def test_legacy_card_type_is_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "card_types",
+    [
+        [],
+        ["white", "white"],
+        ["black", "black"],
+        ["platinum"],
+    ],
+)
+def test_invalid_card_types_are_rejected(
+    tmp_path: Path,
+    card_types: list[str],
+) -> None:
     resolved = settings(tmp_path)
     app = create_app(
         settings=resolved,
@@ -292,8 +333,48 @@ def test_legacy_card_type_is_rejected(tmp_path: Path) -> None:
 
     response = TestClient(app).post(
         "/api/v1/reports",
-        json={**report_payload(), "cardType": "black"},
+        json={**report_payload(), "cardTypes": card_types},
     )
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "REQUEST_SCHEMA_INVALID"
+
+
+def test_legacy_card_fields_are_rejected(tmp_path: Path) -> None:
+    resolved = settings(tmp_path)
+    app = create_app(
+        settings=resolved,
+        report_service=FakeReportService(),  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+    client = TestClient(app)
+
+    include_black = client.post(
+        "/api/v1/reports",
+        json={**report_payload(), "includeBlackCard": True},
+    )
+    card_type = client.post(
+        "/api/v1/reports",
+        json={**report_payload(), "cardType": "black"},
+    )
+
+    assert include_black.status_code == 422
+    assert card_type.status_code == 422
+
+
+def test_openapi_describes_card_types_as_unique_enum_array(tmp_path: Path) -> None:
+    resolved = settings(tmp_path)
+    app = create_app(
+        settings=resolved,
+        report_service=FakeReportService(),  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+
+    schema = app.openapi()["components"]["schemas"]["ReportRequest"]
+    card_types = schema["properties"]["cardTypes"]
+
+    assert card_types["items"]["enum"] == ["white", "black"]
+    assert card_types["minItems"] == 1
+    assert card_types["maxItems"] == 2
+    assert card_types["uniqueItems"] is True
+    assert card_types["default"] == ["white"]

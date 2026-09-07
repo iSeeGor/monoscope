@@ -3,12 +3,14 @@ from decimal import Decimal
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
 from monoscope.rates import RateSource
 
 KYIV = ZoneInfo("Europe/Kyiv")
+CardType = Literal["white", "black"]
+CARD_TYPE_ORDER: tuple[CardType, ...] = ("white", "black")
 
 
 class ApiModel(BaseModel):
@@ -22,10 +24,22 @@ class ApiModel(BaseModel):
 class ReportRequest(ApiModel):
     model_config = ConfigDict(extra="forbid")
 
-    include_black_card: bool = False
+    card_types: list[CardType] = Field(
+        default_factory=lambda: ["white"],
+        min_length=1,
+        max_length=2,
+        json_schema_extra={"default": ["white"], "uniqueItems": True},
+    )
     date_from: date
     date_to: date
     include_holds: bool = True
+
+    @field_validator("card_types")
+    @classmethod
+    def validate_card_types(cls, card_types: list[CardType]) -> list[CardType]:
+        if len(card_types) != len(set(card_types)):
+            raise ValueError("cardTypes must not contain duplicates")
+        return [card_type for card_type in CARD_TYPE_ORDER if card_type in card_types]
 
     @model_validator(mode="after")
     def validate_date_range(self) -> "ReportRequest":
@@ -41,6 +55,7 @@ class ReportRequest(ApiModel):
 class ReportMeta(ApiModel):
     card_types: (
         tuple[Literal["white"]]
+        | tuple[Literal["black"]]
         | tuple[Literal["white"], Literal["black"]]
     )
     date_from: date

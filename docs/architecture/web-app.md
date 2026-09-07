@@ -82,7 +82,8 @@ so tests can use deterministic fakes without network access.
 ## Web request lifecycle
 
 1. FastAPI validates the request and inclusive date range.
-2. The API creates a cache key from included cards, range, pending flag, application
+2. The API canonicalizes the requested card scope to white before black and
+   creates a cache key from that scope, range, pending flag, application
    calculation version, and a one-way token fingerprint.
 3. A fresh cached report is returned when available.
 4. Otherwise the report service resolves all requested accounts with one
@@ -127,9 +128,9 @@ between every sequential statement request made by one client, including
 requests for different cards. The 31-day web limit ensures one statement window
 per card. FastAPI may run the blocking report service in its worker thread pool.
 
-Web reports always include the white card and optionally include the black card.
-The optional path is atomic: an upstream failure for either card aborts the
-whole report, so no partial result is written to the cache.
+Web reports support white-only, black-only, and combined card scopes. Combined
+reports are atomic: an upstream failure for either card aborts the whole
+report, so no partial result is written to the cache.
 
 Prevent duplicate simultaneous requests for the same cache key with an
 in-process keyed lock. This is sufficient for the supported one-process local

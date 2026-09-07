@@ -4,11 +4,14 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import date
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol, cast
 
 from monoscope.normalize import Expense, normalize_expenses
 from monoscope.rates import RateSource, kyiv_date
 from monoscope.report import CategorySummary, summarize_by_category
+
+CardType = Literal["white", "black"]
+CARD_TYPE_ORDER: tuple[CardType, ...] = ("white", "black")
 
 
 class StatementProvider(Protocol):
@@ -70,25 +73,46 @@ class ReportService:
         self._rates = rates
 
     def generate(self, params: ReportParams) -> ReportResult:
-        accounts = self._statements.find_accounts(params.card_types)
+        canonical_params = replace(
+            params,
+            card_types=canonicalize_card_types(params.card_types),
+        )
+        accounts = self._statements.find_accounts(canonical_params.card_types)
         expenses: list[Expense] = []
-        for card_type in params.card_types:
+        for card_type in canonical_params.card_types:
             account = accounts[card_type]
             items = self._statements.get_statement_range(
                 str(account["id"]),
-                params.from_timestamp,
-                params.to_timestamp,
+                canonical_params.from_timestamp,
+                canonical_params.to_timestamp,
             )
             card_expenses = normalize_expenses(
                 items,
                 self._rates,
-                include_holds=params.include_holds,
+                include_holds=canonical_params.include_holds,
             )
             expenses.extend(
                 replace(expense, card_type=card_type) for expense in card_expenses
             )
         expenses.sort(key=lambda expense: expense.time)
-        return build_report_result(params, expenses)
+        return build_report_result(canonical_params, expenses)
+
+
+def canonicalize_card_types(card_types: Sequence[str]) -> tuple[CardType, ...]:
+    requested = tuple(card_types)
+    if not requested:
+        raise ValueError("At least one card type is required")
+    if len(requested) != len(set(requested)):
+        raise ValueError("Card types must not contain duplicates")
+
+    unknown = set(requested).difference(CARD_TYPE_ORDER)
+    if unknown:
+        raise ValueError(f"Unknown card types: {sorted(unknown)}")
+
+    return cast(
+        tuple[CardType, ...],
+        tuple(card_type for card_type in CARD_TYPE_ORDER if card_type in requested),
+    )
 
 
 def build_report_result(

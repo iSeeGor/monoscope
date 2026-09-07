@@ -113,7 +113,7 @@ def test_report_service_combines_cards_without_cross_card_deduplication() -> Non
         }
     )
     params = ReportParams(
-        card_types=("white", "black"),
+        card_types=("black", "white"),
         from_timestamp=black_time,
         to_timestamp=white_time,
         include_holds=True,
@@ -124,6 +124,47 @@ def test_report_service_combines_cards_without_cross_card_deduplication() -> Non
     result = ReportService(statements, FakeRates()).generate(params)
 
     assert statements.lookup_calls == 1
+    assert result.params.card_types == ("white", "black")
+    assert [request[0] for request in statements.requested] == [
+        "white-account",
+        "black-account",
+    ]
     assert [expense.card_type for expense in result.expenses] == ["black", "white"]
     assert result.totals.transaction_count == 2
     assert result.totals.total_uah == 800.0
+
+
+def test_report_service_supports_black_only_scope() -> None:
+    transaction_time = int(datetime(2026, 9, 1, 12, tzinfo=KYIV).timestamp())
+    statements = FakeStatements(
+        {
+            "black-account": [
+                {
+                    "id": "black-only",
+                    "time": transaction_time,
+                    "amount": -40000,
+                    "operationAmount": -40000,
+                    "currencyCode": 980,
+                    "description": "Synthetic black-card shop",
+                    "mcc": 5411,
+                    "hold": False,
+                }
+            ]
+        }
+    )
+    params = ReportParams(
+        card_types=("black",),
+        from_timestamp=transaction_time,
+        to_timestamp=transaction_time,
+        include_holds=True,
+        report_label="2026-09-01",
+        report_title="2026-09-01",
+    )
+
+    result = ReportService(statements, FakeRates()).generate(params)
+
+    assert result.params.card_types == ("black",)
+    assert statements.requested == [
+        ("black-account", transaction_time, transaction_time)
+    ]
+    assert [expense.card_type for expense in result.expenses] == ["black"]

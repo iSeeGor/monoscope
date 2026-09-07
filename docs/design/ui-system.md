@@ -122,10 +122,10 @@ Every data surface defines:
 Filters update draft state. Data is fetched only after Generate is pressed.
 Sorting and local transaction filters must not refetch the report.
 
-Report controls show the white card as a static `Біла картка · Завжди` scope
-indicator. A separate switch adds the black card and is off by default.
-Combined reports identify the source card in transaction rows and expose a
-local card filter; white-only reports omit that redundant filter.
+Report controls allow white-only, black-only, or combined card scope, with
+white selected by default. Combined reports identify the source card in
+transaction rows and expose a local card filter; single-card reports omit that
+redundant filter.
 
 ## Accessibility
 

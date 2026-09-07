@@ -381,6 +381,17 @@
                 "prefixItems": [
                   {
                     "type": "string",
+                    "const": "black"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 1,
+                "minItems": 1
+              },
+              {
+                "prefixItems": [
+                  {
+                    "type": "string",
                     "const": "white"
                   },
                   {
@@ -444,10 +455,22 @@
       },
       "ReportRequest": {
         "properties": {
-          "includeBlackCard": {
-            "type": "boolean",
-            "title": "Includeblackcard",
-            "default": false
+          "cardTypes": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "white",
+                "black"
+              ]
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 1,
+            "uniqueItems": true,
+            "title": "Cardtypes",
+            "default": [
+              "white"
+            ]
           },
           "dateFrom": {
             "type": "string",
