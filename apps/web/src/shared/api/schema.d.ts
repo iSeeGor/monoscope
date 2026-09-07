@@ -134,6 +134,11 @@ export interface components {
             rateSource: ("operation" | "nbu" | "monobank") | null;
             /** Hold */
             hold: boolean;
+            /**
+             * Cardtype
+             * @enum {string}
+             */
+            cardType: "white" | "black";
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -152,8 +157,13 @@ export interface components {
         };
         /** ReportMeta */
         ReportMeta: {
-            /** Cardtype */
-            cardType: string;
+            /** Cardtypes */
+            cardTypes: [
+                "white"
+            ] | [
+                "white",
+                "black"
+            ];
             /**
              * Datefrom
              * Format: date
@@ -181,11 +191,10 @@ export interface components {
         /** ReportRequest */
         ReportRequest: {
             /**
-             * Cardtype
-             * @default white
-             * @enum {string}
+             * Includeblackcard
+             * @default false
              */
-            cardType: "white" | "black";
+            includeBlackCard: boolean;
             /**
              * Datefrom
              * Format: date

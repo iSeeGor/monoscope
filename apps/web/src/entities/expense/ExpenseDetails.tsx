@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import type { Expense } from '../../shared/api/client'
 import { formatDate, formatMoney } from '../../shared/format'
+import { CardBadge } from '../../shared/ui/CardBadge'
 import { StatusBadge } from '../../shared/ui/StatusBadge'
 
 export function ExpenseDetails({ expense, close }: { expense: Expense; close: () => void }) {
@@ -15,6 +16,7 @@ export function ExpenseDetails({ expense, close }: { expense: Expense; close: ()
         <dl>
           <div><dt>Дата</dt><dd>{formatDate(expense.occurredAt, { year: 'numeric', hour: '2-digit', minute: '2-digit' })}</dd></div>
           <div><dt>Категорія</dt><dd>{expense.category}</dd></div>
+          <div><dt>Картка</dt><dd><CardBadge cardType={expense.cardType} /></dd></div>
           <div><dt>Статус</dt><dd><StatusBadge hold={expense.hold} /></dd></div>
           <div><dt>Оригінальна сума</dt><dd>{formatMoney(expense.amountOriginal, expense.currencyOriginal)}</dd></div>
           <div><dt>Курс</dt><dd>{expense.rateUsed ?? '—'} {expense.rateSource ?? ''}</dd></div>

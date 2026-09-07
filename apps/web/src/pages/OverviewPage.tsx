@@ -20,7 +20,7 @@ export default function OverviewPage({
         {report && <div className="exports"><a href={exportUrl(report.reportId, 'csv')}><Download size={16} /> CSV</a><a href={exportUrl(report.reportId, 'md')}><FileText size={16} /> Markdown</a></div>}
       </div>
       <ReportControls submit={(request) => mutation.mutate(request)} pending={mutation.isPending} />
-      {report && <div className="report-meta"><span>{report.meta.cardType === 'white' ? 'Біла картка' : 'Чорна картка'}</span><span>{formatDate(report.meta.dateFrom, { year: 'numeric' })} — {formatDate(report.meta.dateTo, { year: 'numeric' })}</span>{report.cached && <span>З кешу</span>}</div>}
+      {report && <div className="report-meta"><span>{report.meta.cardTypes.length === 2 ? 'Біла та чорна картки' : 'Біла картка'}</span><span>{formatDate(report.meta.dateFrom, { year: 'numeric' })} — {formatDate(report.meta.dateTo, { year: 'numeric' })}</span>{report.cached && <span>З кешу</span>}</div>}
       {!report && !mutation.isPending && !mutation.isError && <InitialReportState />}
       {mutation.isPending && <LoadingReportState />}
       {mutation.isError && <ErrorReportState error={mutation.error} retry={() => mutation.mutate(mutation.variables)} />}

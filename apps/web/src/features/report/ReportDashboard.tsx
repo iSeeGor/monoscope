@@ -9,6 +9,7 @@ import { EmptyReportState } from './ReportStates'
 
 export function ReportDashboard({ report }: { report: Report }) {
   if (report.expenses.length === 0) return <EmptyReportState />
+  const combinedCards = report.meta.cardTypes.length === 2
   return (
     <div className="dashboard">
       <section className="metrics" aria-label="Ключові показники">
@@ -21,7 +22,7 @@ export function ReportDashboard({ report }: { report: Report }) {
       <CategoryBarChart categories={report.categories} />
       <section className="card recent">
         <div className="card-heading"><div><h2>Останні транзакції</h2><p>Найновіші у звіті</p></div><NavLink to="/transactions">Усі</NavLink></div>
-        <ExpenseRows expenses={[...report.expenses].reverse().slice(0, 5)} compact />
+        <ExpenseRows expenses={[...report.expenses].reverse().slice(0, 5)} compact showCard={combinedCards} />
       </section>
     </div>
   )

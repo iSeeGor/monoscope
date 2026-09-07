@@ -21,6 +21,7 @@ export type Expense = {
   rateUsed: string | null
   rateSource: 'operation' | 'nbu' | 'monobank' | null
   hold: boolean
+  cardType: 'white' | 'black'
 }
 
 export type Report = {

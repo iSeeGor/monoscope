@@ -2,7 +2,7 @@ import { ChartNoAxesCombined, CircleAlert } from 'lucide-react'
 import { ApiError } from '../../shared/api/client'
 
 export function InitialReportState() {
-  return <section className="state-card card"><div className="state-icon"><ChartNoAxesCombined /></div><h2>Сформуйте перший звіт</h2><p>Оберіть картку й період до 31 дня. Розрахунки виконає локальний API.</p></section>
+  return <section className="state-card card"><div className="state-icon"><ChartNoAxesCombined /></div><h2>Сформуйте перший звіт</h2><p>Оберіть період до 31 дня. Біла картка включена завжди, чорну можна додати.</p></section>
 }
 
 export function LoadingReportState() {
@@ -10,7 +10,7 @@ export function LoadingReportState() {
 }
 
 export function EmptyReportState() {
-  return <section className="state-card card"><h2>Витрат за цей період немає</h2><p>Спробуйте інший період або увімкніть холди.</p></section>
+  return <section className="state-card card"><h2>Витрат за цей період немає</h2><p>Спробуйте інший період, додайте чорну картку або увімкніть холди.</p></section>
 }
 
 export function ErrorReportState({ error, retry }: { error: Error; retry: () => void }) {

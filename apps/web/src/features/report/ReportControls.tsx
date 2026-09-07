@@ -13,7 +13,9 @@ export function ReportControls({
 }) {
   const [params, setParams] = useSearchParams()
   const today = todayKyiv()
-  const [cardType, setCardType] = useState<'white' | 'black'>(params.get('card') === 'black' ? 'black' : 'white')
+  const [includeBlackCard, setIncludeBlackCard] = useState(
+    params.get('black') === 'true' || params.get('card') === 'black',
+  )
   const [dateFrom, setDateFrom] = useState(params.get('from') ?? `${today.slice(0, 8)}01`)
   const [dateTo, setDateTo] = useState(params.get('to') ?? today)
   const [includeHolds, setIncludeHolds] = useState(params.get('holds') !== 'false')
@@ -27,22 +29,33 @@ export function ReportControls({
       return
     }
     setError('')
-    setParams({ card: cardType, from: dateFrom, to: dateTo, holds: String(includeHolds) })
-    submit({ cardType, dateFrom, dateTo, includeHolds })
+    const nextParams = new URLSearchParams({
+      from: dateFrom,
+      to: dateTo,
+      holds: String(includeHolds),
+    })
+    if (includeBlackCard) nextParams.set('black', 'true')
+    setParams(nextParams)
+    submit({ includeBlackCard, dateFrom, dateTo, includeHolds })
   }
 
   return (
     <form className="report-controls card" onSubmit={handleSubmit} aria-label="Параметри звіту">
-      <div className="control-group">
-        <span className="label">Картка</span>
-        <div className="segmented">
-          <button type="button" aria-pressed={cardType === 'white'} onClick={() => setCardType('white')}>Біла</button>
-          <button type="button" aria-pressed={cardType === 'black'} onClick={() => setCardType('black')}>Чорна</button>
+      <fieldset className="card-scope">
+        <legend className="label">Картки</legend>
+        <div className="always-card" aria-label="Біла картка, завжди включена">
+          <span>Біла картка</span>
+          <strong>Завжди</strong>
         </div>
-      </div>
-      <label><span className="label">Від</span><input aria-label="Дата від" name="dateFrom" type="date" value={dateFrom} max={today} onChange={(event) => setDateFrom(event.target.value)} /></label>
-      <label><span className="label">До</span><input aria-label="Дата до" name="dateTo" type="date" value={dateTo} max={today} onChange={(event) => setDateTo(event.target.value)} /></label>
-      <label className="switch-label"><input name="includeHolds" type="checkbox" checked={includeHolds} onChange={(event) => setIncludeHolds(event.target.checked)} /><span className="switch" />Врахувати холди</label>
+        <label className="switch-label" htmlFor="include-black-card">
+          <input id="include-black-card" name="includeBlackCard" type="checkbox" checked={includeBlackCard} onChange={(event) => setIncludeBlackCard(event.target.checked)} />
+          <span className="switch" />
+          Додати чорну картку
+        </label>
+      </fieldset>
+      <label htmlFor="report-date-from"><span className="label">Від</span><input id="report-date-from" aria-label="Дата від" name="dateFrom" type="date" value={dateFrom} max={today} onChange={(event) => setDateFrom(event.target.value)} /></label>
+      <label htmlFor="report-date-to"><span className="label">До</span><input id="report-date-to" aria-label="Дата до" name="dateTo" type="date" value={dateTo} max={today} onChange={(event) => setDateTo(event.target.value)} /></label>
+      <label className="switch-label" htmlFor="include-holds"><input id="include-holds" name="includeHolds" type="checkbox" checked={includeHolds} onChange={(event) => setIncludeHolds(event.target.checked)} /><span className="switch" />Врахувати холди</label>
       <button className="primary-button" disabled={pending} type="submit">{pending ? 'Формуємо…' : 'Сформувати звіт'}</button>
       {error && <p className="form-error" role="alert">{error}</p>}
     </form>
