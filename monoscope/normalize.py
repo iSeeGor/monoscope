@@ -23,6 +23,7 @@ class Expense:
     rate_used: float | None
     rate_source: RateSource | None
     hold: bool
+    card_type: str = ""
 
 
 def is_expense(item: dict[str, Any]) -> bool:

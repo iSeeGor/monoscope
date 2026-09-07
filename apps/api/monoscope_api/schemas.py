@@ -20,7 +20,9 @@ class ApiModel(BaseModel):
 
 
 class ReportRequest(ApiModel):
-    card_type: Literal["white", "black"] = "white"
+    model_config = ConfigDict(extra="forbid")
+
+    include_black_card: bool = False
     date_from: date
     date_to: date
     include_holds: bool = True
@@ -37,7 +39,10 @@ class ReportRequest(ApiModel):
 
 
 class ReportMeta(ApiModel):
-    card_type: str
+    card_types: (
+        tuple[Literal["white"]]
+        | tuple[Literal["white"], Literal["black"]]
+    )
     date_from: date
     date_to: date
     generated_at: datetime
@@ -76,6 +81,7 @@ class ExpenseResponse(ApiModel):
     rate_used: Decimal | None
     rate_source: RateSource | None
     hold: bool
+    card_type: Literal["white", "black"]
 
 
 class ReportResponse(ApiModel):

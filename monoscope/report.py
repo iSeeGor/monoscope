@@ -200,6 +200,7 @@ def format_csv(expenses: list[Expense]) -> str:
         "rate_source",
         "hold",
         "id",
+        "card_type",
     ]
 
     output = io.StringIO(newline="")
@@ -224,6 +225,7 @@ def format_csv(expenses: list[Expense]) -> str:
                 "rate_source": expense.rate_source or "",
                 "hold": "true" if expense.hold else "false",
                 "id": expense.id,
+                "card_type": expense.card_type,
             }
         )
     return output.getvalue()

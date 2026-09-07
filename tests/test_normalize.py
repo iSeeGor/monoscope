@@ -90,6 +90,7 @@ def test_normalizes_uah_eur_and_usd() -> None:
     )
 
     by_id = {expense.id: expense for expense in expenses}
+    assert {expense.card_type for expense in expenses} == {""}
     assert by_id["uah"].amount_uah == 4000.0
     assert by_id["uah"].amount_eur == 100.0
     assert by_id["uah"].rate_used == 40.0

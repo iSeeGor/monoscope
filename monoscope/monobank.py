@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -28,10 +28,19 @@ class MonobankRateLimitError(MonobankError):
 
 
 class MonobankClient:
-    def __init__(self, token: str) -> None:
+    def __init__(
+        self,
+        token: str,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._token = token
         self._session = requests.Session()
         self._session.headers["X-Token"] = token
+        self._clock = clock
+        self._sleep = sleep
+        self._last_statement_at: float | None = None
 
     def get_client_info(self) -> dict[str, Any]:
         return self._get("/personal/client-info")
@@ -39,6 +48,7 @@ class MonobankClient:
     def get_statement(
         self, account_id: str, from_ts: int, to_ts: int
     ) -> list[dict[str, Any]]:
+        self._wait_for_statement_slot()
         path = f"/personal/statement/{account_id}/{from_ts}/{to_ts}"
         data = self._get(path)
         if not isinstance(data, list):
@@ -52,9 +62,7 @@ class MonobankClient:
         seen_ids: set[str] = set()
         windows = list(_statement_windows(from_ts, to_ts))
 
-        for index, (window_from, window_to) in enumerate(windows):
-            if index > 0:
-                time.sleep(RATE_LIMIT_SECONDS)
+        for window_from, window_to in windows:
             chunk = self.get_statement(account_id, window_from, window_to)
             for item in chunk:
                 item_id = str(item.get("id", ""))
@@ -67,19 +75,39 @@ class MonobankClient:
         return items
 
     def find_account(self, card_type: str) -> dict[str, Any]:
+        return self.find_accounts((card_type,))[card_type]
+
+    def find_accounts(
+        self, card_types: tuple[str, ...]
+    ) -> dict[str, dict[str, Any]]:
         info = self.get_client_info()
         accounts = info.get("accounts", [])
-        matches = [a for a in accounts if a.get("type") == card_type]
-        if not matches:
-            available = sorted({a.get("type") for a in accounts if a.get("type")})
-            raise MonobankError(
-                f"No account with type {card_type!r}. Available types: {available}"
-            )
-        if len(matches) > 1:
-            raise MonobankError(
-                f"Multiple accounts with type {card_type!r}; specify a different filter."
-            )
-        return matches[0]
+        found: dict[str, dict[str, Any]] = {}
+        for card_type in card_types:
+            matches = [account for account in accounts if account.get("type") == card_type]
+            if not matches:
+                available = sorted(
+                    {account.get("type") for account in accounts if account.get("type")}
+                )
+                raise MonobankError(
+                    f"No account with type {card_type!r}. Available types: {available}"
+                )
+            if len(matches) > 1:
+                raise MonobankError(
+                    f"Multiple accounts with type {card_type!r}; "
+                    "specify a different filter."
+                )
+            found[card_type] = matches[0]
+        return found
+
+    def _wait_for_statement_slot(self) -> None:
+        now = self._clock()
+        if self._last_statement_at is not None:
+            wait_seconds = RATE_LIMIT_SECONDS - (now - self._last_statement_at)
+            if wait_seconds > 0:
+                self._sleep(wait_seconds)
+                now = self._clock()
+        self._last_statement_at = now
 
     def _get(self, path: str) -> Any:
         url = f"{BASE_URL}{path}"

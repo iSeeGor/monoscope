@@ -61,7 +61,7 @@ service:
 
 ```python
 ReportParams(
-    card_type,
+    card_types,
     from_timestamp,
     to_timestamp,
     include_holds,
@@ -82,11 +82,13 @@ so tests can use deterministic fakes without network access.
 ## Web request lifecycle
 
 1. FastAPI validates the request and inclusive date range.
-2. The API creates a cache key from card, range, pending flag, application
+2. The API creates a cache key from included cards, range, pending flag, application
    calculation version, and a one-way token fingerprint.
 3. A fresh cached report is returned when available.
-4. Otherwise the report service fetches Monobank data, normalizes it, loads
-   rates, summarizes it, and stores the serialized result.
+4. Otherwise the report service resolves all requested accounts with one
+   client-info lookup. It fetches and normalizes each card statement separately,
+   tags every normalized expense with its source card, then merges and sorts
+   the expenses before summarizing and storing the serialized result.
 5. FastAPI returns the report with a stable report ID.
 6. Export endpoints read the same cached report by ID.
 
@@ -120,9 +122,14 @@ Redis or PostgreSQL implementation.
 
 ## Concurrency and rate limits
 
-The current Monobank client is synchronous and may sleep between statement
-windows. The 31-day web limit ensures one statement window. FastAPI may run the
-blocking report service in its worker thread pool.
+The current Monobank client is synchronous and enforces the statement cooldown
+between every sequential statement request made by one client, including
+requests for different cards. The 31-day web limit ensures one statement window
+per card. FastAPI may run the blocking report service in its worker thread pool.
+
+Web reports always include the white card and optionally include the black card.
+The optional path is atomic: an upstream failure for either card aborts the
+whole report, so no partial result is written to the cache.
 
 Prevent duplicate simultaneous requests for the same cache key with an
 in-process keyed lock. This is sufficient for the supported one-process local

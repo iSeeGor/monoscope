@@ -1,5 +1,10 @@
 from monoscope.normalize import Expense
-from monoscope.report import format_cli_report, format_markdown_report, summarize_by_category
+from monoscope.report import (
+    format_cli_report,
+    format_csv,
+    format_markdown_report,
+    summarize_by_category,
+)
 
 
 def expense(
@@ -9,6 +14,7 @@ def expense(
     eur: float,
     uah: float,
     hold: bool = False,
+    card_type: str = "",
 ) -> Expense:
     return Expense(
         id=item_id,
@@ -24,6 +30,7 @@ def expense(
         rate_used=40.0,
         rate_source="nbu",
         hold=hold,
+        card_type=card_type,
     )
 
 
@@ -67,3 +74,34 @@ def test_empty_report_is_explicit() -> None:
         card_type="white",
         report_label="2026-09",
     )
+
+
+def test_exports_include_card_sources() -> None:
+    expenses = [
+        expense(
+            "white",
+            category="Продукти",
+            eur=10.0,
+            uah=400.0,
+            card_type="white",
+        ),
+        expense(
+            "black",
+            category="Книги",
+            eur=25.0,
+            uah=1000.0,
+            card_type="black",
+        ),
+    ]
+
+    csv_output = format_csv(expenses)
+    markdown = format_markdown_report(
+        expenses,
+        card_type="white + black",
+        report_label="2026-09",
+    )
+
+    assert csv_output.splitlines()[0].endswith(",card_type")
+    assert csv_output.splitlines()[1].endswith(",white")
+    assert csv_output.splitlines()[2].endswith(",black")
+    assert "**Картка:** white + black" in markdown

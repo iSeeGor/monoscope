@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any, Protocol
 
@@ -12,7 +12,9 @@ from monoscope.report import CategorySummary, summarize_by_category
 
 
 class StatementProvider(Protocol):
-    def find_account(self, card_type: str) -> dict[str, Any]: ...
+    def find_accounts(
+        self, card_types: tuple[str, ...]
+    ) -> dict[str, dict[str, Any]]: ...
 
     def get_statement_range(
         self, account_id: str, from_ts: int, to_ts: int
@@ -29,7 +31,7 @@ class RateProvider(Protocol):
 
 @dataclass(frozen=True)
 class ReportParams:
-    card_type: str
+    card_types: tuple[str, ...]
     from_timestamp: int
     to_timestamp: int
     include_holds: bool
@@ -68,17 +70,24 @@ class ReportService:
         self._rates = rates
 
     def generate(self, params: ReportParams) -> ReportResult:
-        account = self._statements.find_account(params.card_type)
-        items = self._statements.get_statement_range(
-            str(account["id"]),
-            params.from_timestamp,
-            params.to_timestamp,
-        )
-        expenses = normalize_expenses(
-            items,
-            self._rates,
-            include_holds=params.include_holds,
-        )
+        accounts = self._statements.find_accounts(params.card_types)
+        expenses: list[Expense] = []
+        for card_type in params.card_types:
+            account = accounts[card_type]
+            items = self._statements.get_statement_range(
+                str(account["id"]),
+                params.from_timestamp,
+                params.to_timestamp,
+            )
+            card_expenses = normalize_expenses(
+                items,
+                self._rates,
+                include_holds=params.include_holds,
+            )
+            expenses.extend(
+                replace(expense, card_type=card_type) for expense in card_expenses
+            )
+        expenses.sort(key=lambda expense: expense.time)
         return build_report_result(params, expenses)
 
 

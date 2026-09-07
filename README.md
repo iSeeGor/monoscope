@@ -144,7 +144,9 @@ CUSTOM_RULES: list[Rule] = [
 
 ## CSV
 
-Колонки: `date`, `time`, `description`, `comment`, `category`, `mcc`, `amount_original`, `currency_original`, `amount_eur`, `rate_used`, `rate_source`, `hold`, `id`.
+Колонки: `date`, `time`, `description`, `comment`, `category`, `mcc`,
+`amount_original`, `currency_original`, `amount_eur`, `rate_used`,
+`rate_source`, `hold`, `id`, `card_type`.
 
 `hold=true` — операція ще не проведена остаточно.
 

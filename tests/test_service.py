@@ -9,19 +9,23 @@ KYIV = ZoneInfo("Europe/Kyiv")
 
 
 class FakeStatements:
-    def __init__(self, items: list[dict]) -> None:
-        self.items = items
-        self.requested: tuple[str, int, int] | None = None
+    def __init__(self, items_by_account: dict[str, list[dict]]) -> None:
+        self.items_by_account = items_by_account
+        self.requested: list[tuple[str, int, int]] = []
+        self.lookup_calls = 0
 
-    def find_account(self, card_type: str) -> dict:
-        assert card_type == "white"
-        return {"id": "account-id", "type": "white"}
+    def find_accounts(self, card_types: tuple[str, ...]) -> dict[str, dict]:
+        self.lookup_calls += 1
+        return {
+            card_type: {"id": f"{card_type}-account", "type": card_type}
+            for card_type in card_types
+        }
 
     def get_statement_range(
         self, account_id: str, from_ts: int, to_ts: int
     ) -> list[dict]:
-        self.requested = (account_id, from_ts, to_ts)
-        return self.items
+        self.requested.append((account_id, from_ts, to_ts))
+        return self.items_by_account[account_id]
 
 
 class FakeRates:
@@ -38,31 +42,33 @@ def test_report_service_builds_totals_categories_and_daily_series() -> None:
     first_time = int(datetime(2026, 9, 1, 12, tzinfo=KYIV).timestamp())
     second_time = int(datetime(2026, 9, 2, 12, tzinfo=KYIV).timestamp())
     statements = FakeStatements(
-        [
-            {
-                "id": "first",
-                "time": first_time,
-                "amount": -40000,
-                "operationAmount": -40000,
-                "currencyCode": 980,
-                "description": "Synthetic shop",
-                "mcc": 5411,
-                "hold": False,
-            },
-            {
-                "id": "second",
-                "time": second_time,
-                "amount": -20000,
-                "operationAmount": -20000,
-                "currencyCode": 980,
-                "description": "Synthetic shop",
-                "mcc": 5411,
-                "hold": True,
-            },
-        ]
+        {
+            "white-account": [
+                {
+                    "id": "first",
+                    "time": first_time,
+                    "amount": -40000,
+                    "operationAmount": -40000,
+                    "currencyCode": 980,
+                    "description": "Synthetic shop",
+                    "mcc": 5411,
+                    "hold": False,
+                },
+                {
+                    "id": "second",
+                    "time": second_time,
+                    "amount": -20000,
+                    "operationAmount": -20000,
+                    "currencyCode": 980,
+                    "description": "Synthetic shop",
+                    "mcc": 5411,
+                    "hold": True,
+                },
+            ]
+        }
     )
     params = ReportParams(
-        card_type="white",
+        card_types=("white",),
         from_timestamp=first_time,
         to_timestamp=second_time,
         include_holds=True,
@@ -72,7 +78,9 @@ def test_report_service_builds_totals_categories_and_daily_series() -> None:
 
     result = ReportService(statements, FakeRates()).generate(params)
 
-    assert statements.requested == ("account-id", first_time, second_time)
+    assert statements.lookup_calls == 1
+    assert statements.requested == [("white-account", first_time, second_time)]
+    assert {expense.card_type for expense in result.expenses} == {"white"}
     assert result.totals.total_uah == 600.0
     assert result.totals.total_eur == 15.0
     assert result.totals.transaction_count == 2
@@ -84,3 +92,38 @@ def test_report_service_builds_totals_categories_and_daily_series() -> None:
         ("2026-09-01", 400.0),
         ("2026-09-02", 200.0),
     ]
+
+
+def test_report_service_combines_cards_without_cross_card_deduplication() -> None:
+    black_time = int(datetime(2026, 9, 1, 10, tzinfo=KYIV).timestamp())
+    white_time = int(datetime(2026, 9, 1, 12, tzinfo=KYIV).timestamp())
+    common = {
+        "id": "same-upstream-id",
+        "amount": -40000,
+        "operationAmount": -40000,
+        "currencyCode": 980,
+        "description": "Synthetic shop",
+        "mcc": 5411,
+        "hold": False,
+    }
+    statements = FakeStatements(
+        {
+            "white-account": [{**common, "time": white_time}],
+            "black-account": [{**common, "time": black_time}],
+        }
+    )
+    params = ReportParams(
+        card_types=("white", "black"),
+        from_timestamp=black_time,
+        to_timestamp=white_time,
+        include_holds=True,
+        report_label="2026-09-01",
+        report_title="2026-09-01",
+    )
+
+    result = ReportService(statements, FakeRates()).generate(params)
+
+    assert statements.lookup_calls == 1
+    assert [expense.card_type for expense in result.expenses] == ["black", "white"]
+    assert result.totals.transaction_count == 2
+    assert result.totals.total_uah == 800.0

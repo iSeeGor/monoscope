@@ -1,4 +1,44 @@
-from monoscope.monobank import MAX_STATEMENT_SECONDS, _statement_windows
+from typing import Any
+
+from monoscope.monobank import (
+    MAX_STATEMENT_SECONDS,
+    RATE_LIMIT_SECONDS,
+    MonobankClient,
+    _statement_windows,
+)
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+        self.sleeps: list[float] = []
+
+    def __call__(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
+class FakeMonobankClient(MonobankClient):
+    def __init__(self, clock: FakeClock) -> None:
+        super().__init__("synthetic-token", clock=clock, sleep=clock.sleep)
+        self.client_info_calls = 0
+        self.paths: list[str] = []
+
+    def get_client_info(self) -> dict[str, Any]:
+        self.client_info_calls += 1
+        return {
+            "accounts": [
+                {"id": "white-id", "type": "white"},
+                {"id": "black-id", "type": "black"},
+            ]
+        }
+
+    def _get(self, path: str) -> Any:
+        self.paths.append(path)
+        return []
 
 
 def test_statement_window_keeps_short_range_intact() -> None:
@@ -19,3 +59,27 @@ def test_statement_windows_are_contiguous_without_overlap() -> None:
 
 def test_statement_window_includes_single_timestamp() -> None:
     assert list(_statement_windows(100, 100)) == [(100, 100)]
+
+
+def test_find_accounts_uses_one_client_info_lookup() -> None:
+    client = FakeMonobankClient(FakeClock())
+
+    accounts = client.find_accounts(("white", "black"))
+
+    assert client.client_info_calls == 1
+    assert accounts["white"]["id"] == "white-id"
+    assert accounts["black"]["id"] == "black-id"
+
+
+def test_statement_rate_limit_applies_across_separate_ranges() -> None:
+    clock = FakeClock()
+    client = FakeMonobankClient(clock)
+
+    client.get_statement_range("white-id", 100, 200)
+    client.get_statement_range("black-id", 100, 200)
+
+    assert clock.sleeps == [RATE_LIMIT_SECONDS]
+    assert client.paths == [
+        "/personal/statement/white-id/100/200",
+        "/personal/statement/black-id/100/200",
+    ]

@@ -31,7 +31,7 @@ Request:
 
 ```json
 {
-  "cardType": "white",
+  "includeBlackCard": false,
   "dateFrom": "2026-09-01",
   "dateTo": "2026-09-30",
   "includeHolds": true
@@ -40,7 +40,8 @@ Request:
 
 Validation:
 
-- `cardType` is `white` or `black`;
+- white-card expenses are always included;
+- `includeBlackCard` defaults to `false` and adds black-card expenses when true;
 - both dates are required and inclusive;
 - `dateFrom` is not after `dateTo`;
 - range is no longer than 31 inclusive days;
@@ -54,7 +55,7 @@ Response:
   "reportId": "rpt_...",
   "cached": false,
   "meta": {
-    "cardType": "white",
+    "cardTypes": ["white"],
     "dateFrom": "2026-09-01",
     "dateTo": "2026-09-30",
     "generatedAt": "2026-09-30T18:42:00+03:00",
@@ -94,7 +95,8 @@ Response:
       "amountEur": "13.18",
       "rateUsed": "48.5584",
       "rateSource": "nbu",
-      "hold": false
+      "hold": false,
+      "cardType": "white"
     }
   ]
 }
@@ -102,6 +104,8 @@ Response:
 
 Expense order is ascending by occurrence time in the transport contract.
 Frontend views may display a derived descending order.
+For combined reports, `meta.cardTypes` is `["white", "black"]`; every expense
+identifies its source card through `cardType`.
 
 ## Export completed report
 
@@ -115,7 +119,7 @@ CSV columns remain compatible with the existing CLI:
 
 ```text
 date,time,description,comment,category,mcc,amount_original,
-currency_original,amount_eur,rate_used,rate_source,hold,id
+currency_original,amount_eur,rate_used,rate_source,hold,id,card_type
 ```
 
 `amount_uah` may be appended as a new column after `amount_eur`; existing

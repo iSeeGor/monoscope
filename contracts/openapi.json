@@ -301,6 +301,14 @@
           "hold": {
             "type": "boolean",
             "title": "Hold"
+          },
+          "cardType": {
+            "type": "string",
+            "enum": [
+              "white",
+              "black"
+            ],
+            "title": "Cardtype"
           }
         },
         "type": "object",
@@ -317,7 +325,8 @@
           "amountEur",
           "rateUsed",
           "rateSource",
-          "hold"
+          "hold",
+          "cardType"
         ],
         "title": "ExpenseResponse"
       },
@@ -355,9 +364,36 @@
       },
       "ReportMeta": {
         "properties": {
-          "cardType": {
-            "type": "string",
-            "title": "Cardtype"
+          "cardTypes": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "const": "white"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 1,
+                "minItems": 1
+              },
+              {
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "const": "white"
+                  },
+                  {
+                    "type": "string",
+                    "const": "black"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              }
+            ],
+            "title": "Cardtypes"
           },
           "dateFrom": {
             "type": "string",
@@ -395,7 +431,7 @@
         },
         "type": "object",
         "required": [
-          "cardType",
+          "cardTypes",
           "dateFrom",
           "dateTo",
           "generatedAt",
@@ -408,14 +444,10 @@
       },
       "ReportRequest": {
         "properties": {
-          "cardType": {
-            "type": "string",
-            "enum": [
-              "white",
-              "black"
-            ],
-            "title": "Cardtype",
-            "default": "white"
+          "includeBlackCard": {
+            "type": "boolean",
+            "title": "Includeblackcard",
+            "default": false
           },
           "dateFrom": {
             "type": "string",
@@ -433,6 +465,7 @@
             "default": true
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "dateFrom",

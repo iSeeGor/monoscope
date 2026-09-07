@@ -75,7 +75,7 @@ def export_markdown(
     report = _cached_report(cache, report_id)
     content = format_markdown_report(
         expenses_from_cached(report),
-        card_type=report.response.meta.card_type,
+        card_type=" + ".join(report.response.meta.card_types),
         report_label=report.report_title,
     )
     return Response(

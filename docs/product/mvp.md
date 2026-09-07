@@ -22,8 +22,8 @@ is no registration, remote account, or shared workspace in the MVP.
 ## Primary workflow
 
 1. Open the dashboard.
-2. Choose a white or black card, month or custom date range, and whether to
-   include pending operations.
+2. Choose a month or custom date range, whether to add the black card to the
+   always-included white card, and whether to include pending operations.
 3. Generate the report.
 4. Review totals, category distribution, daily trend, and transactions.
 5. Search, filter, and sort transactions.
@@ -39,7 +39,7 @@ is no registration, remote account, or shared workspace in the MVP.
 - ranked category breakdown with amounts, share, and count;
 - daily spending trend;
 - recent transactions;
-- visible report period and selected card.
+- visible report period and included cards.
 
 ### Transactions
 
@@ -55,7 +55,7 @@ is no registration, remote account, or shared workspace in the MVP.
 
 - month picker;
 - custom inclusive date range, limited to 31 days in the first web release;
-- card type selector (`white` or `black`);
+- optional black-card toggle; the white card is always included;
 - include-pending toggle;
 - explicit Generate action;
 - URL query parameters for shareable/reloadable filter state.

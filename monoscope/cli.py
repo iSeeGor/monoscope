@@ -35,7 +35,7 @@ def main(csv_path: Path | None, md_path: Path | None) -> None:
 
     service = ReportService(MonobankClient(config.token), RateLookup())
     params = ReportParams(
-        card_type=config.card_type,
+        card_types=(config.card_type,),
         from_timestamp=config.from_unix,
         to_timestamp=config.to_unix,
         include_holds=config.include_holds,

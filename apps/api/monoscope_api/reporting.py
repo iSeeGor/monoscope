@@ -20,7 +20,7 @@ from monoscope.normalize import Expense
 from monoscope.service import ReportParams, ReportResult
 
 KYIV = ZoneInfo("Europe/Kyiv")
-CALCULATION_VERSION = "1"
+CALCULATION_VERSION = "2"
 
 
 def build_params(request: ReportRequest, now: datetime | None = None) -> ReportParams:
@@ -30,8 +30,9 @@ def build_params(request: ReportRequest, now: datetime | None = None) -> ReportP
     end = min(requested_end, current) if request.date_to == current.date() else requested_end
     report_label = f"{request.date_from.isoformat()}_{request.date_to.isoformat()}"
     report_title = f"{request.date_from.isoformat()} — {request.date_to.isoformat()}"
+    card_types = ("white", "black") if request.include_black_card else ("white",)
     return ReportParams(
-        card_type=request.card_type,
+        card_types=card_types,
         from_timestamp=int(start.timestamp()),
         to_timestamp=int(end.timestamp()),
         include_holds=request.include_holds,
@@ -62,7 +63,7 @@ def map_report(
         report_id=f"rpt_{uuid4().hex}",
         cached=False,
         meta=ReportMeta(
-            card_type=request.card_type,
+            card_types=list(result.params.card_types),
             date_from=request.date_from,
             date_to=request.date_to,
             generated_at=generated_at or datetime.now(KYIV),
@@ -105,6 +106,7 @@ def map_report(
                 rate_used=_rate(item.rate_used),
                 rate_source=item.rate_source,
                 hold=item.hold,
+                card_type=item.card_type,
             )
             for item in result.expenses
         ],
@@ -132,6 +134,7 @@ def expenses_from_cached(report: CachedReport) -> list[Expense]:
             rate_used=float(item.rate_used) if item.rate_used is not None else None,
             rate_source=item.rate_source,
             hold=item.hold,
+            card_type=item.card_type,
         )
         for item in report.response.expenses
     ]

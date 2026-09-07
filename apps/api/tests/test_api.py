@@ -8,6 +8,7 @@ from apps.api.monoscope_api.cache import ReportCache
 from apps.api.monoscope_api.main import create_app
 from apps.api.monoscope_api.settings import Settings
 from monoscope.monobank import (
+    MonobankError,
     MonobankRateLimitError,
     MonobankUnauthorizedError,
 )
@@ -23,22 +24,28 @@ class FakeReportService:
 
     def generate(self, params: ReportParams):
         self.calls += 1
-        expense = Expense(
-            id="synthetic-1",
-            time=int(datetime(2026, 9, 2, 12, tzinfo=KYIV).timestamp()),
-            description="Synthetic grocery",
-            comment="",
-            mcc=5411,
-            category="Продукти",
-            amount_original=400.0,
-            currency_original="UAH",
-            amount_eur=10.0,
-            amount_uah=400.0,
-            rate_used=40.0,
-            rate_source="nbu",
-            hold=False,
-        )
-        return build_report_result(params, [expense])
+        expenses = [
+            Expense(
+                id=f"synthetic-{card_type}",
+                time=int(
+                    datetime(2026, 9, 2, 12 + index, tzinfo=KYIV).timestamp()
+                ),
+                description=f"Synthetic {card_type} grocery",
+                comment="",
+                mcc=5411,
+                category="Продукти",
+                amount_original=400.0,
+                currency_original="UAH",
+                amount_eur=10.0,
+                amount_uah=400.0,
+                rate_used=40.0,
+                rate_source="nbu",
+                hold=False,
+                card_type=card_type,
+            )
+            for index, card_type in enumerate(params.card_types)
+        ]
+        return build_report_result(params, expenses)
 
 
 class UnauthorizedService:
@@ -49,6 +56,19 @@ class UnauthorizedService:
 class RateLimitedService:
     def generate(self, params: ReportParams):
         raise MonobankRateLimitError("Synthetic rate limit response")
+
+
+class FailsBlackOnceService(FakeReportService):
+    def __init__(self) -> None:
+        super().__init__()
+        self.failed = False
+
+    def generate(self, params: ReportParams):
+        if "black" in params.card_types and not self.failed:
+            self.calls += 1
+            self.failed = True
+            raise MonobankError("Synthetic black statement failure")
+        return super().generate(params)
 
 
 def settings(tmp_path: Path) -> Settings:
@@ -62,7 +82,6 @@ def settings(tmp_path: Path) -> Settings:
 
 def report_payload() -> dict:
     return {
-        "cardType": "white",
         "dateFrom": "2026-09-01",
         "dateTo": "2026-09-05",
         "includeHolds": True,
@@ -100,8 +119,10 @@ def test_report_response_is_cached_and_uses_camel_case(tmp_path: Path) -> None:
     assert first.status_code == 200
     assert first.json()["cached"] is False
     assert first.json()["meta"]["totalUah"] == "400.00"
+    assert first.json()["meta"]["cardTypes"] == ["white"]
     assert first.json()["categories"][0]["sharePct"] == "100.00"
-    assert first.json()["expenses"][0]["description"] == "Synthetic grocery"
+    assert first.json()["expenses"][0]["description"] == "Synthetic white grocery"
+    assert first.json()["expenses"][0]["cardType"] == "white"
     assert second.status_code == 200
     assert second.json()["cached"] is True
     assert second.json()["reportId"] == first.json()["reportId"]
@@ -127,7 +148,8 @@ def test_exports_use_cached_report_without_regeneration(tmp_path: Path) -> None:
     )
 
     assert csv_response.status_code == 200
-    assert "Synthetic grocery" in csv_response.text
+    assert "Synthetic white grocery" in csv_response.text
+    assert csv_response.text.splitlines()[0].endswith(",card_type")
     assert "attachment; filename=" in csv_response.headers["content-disposition"]
     assert markdown_response.status_code == 200
     assert "Витрати Monobank" in markdown_response.text
@@ -145,7 +167,6 @@ def test_invalid_long_date_range_returns_stable_error(tmp_path: Path) -> None:
     response = TestClient(app).post(
         "/api/v1/reports",
         json={
-            "cardType": "white",
             "dateFrom": "2026-01-01",
             "dateTo": "2026-02-01",
             "includeHolds": True,
@@ -207,3 +228,72 @@ def test_missing_export_returns_stable_not_found_error(tmp_path: Path) -> None:
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "REPORT_NOT_FOUND"
+
+
+def test_combined_report_has_both_sources_and_separate_cache_entry(
+    tmp_path: Path,
+) -> None:
+    resolved = settings(tmp_path)
+    service = FakeReportService()
+    app = create_app(
+        settings=resolved,
+        report_service=service,  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+    client = TestClient(app)
+
+    white = client.post("/api/v1/reports", json=report_payload())
+    combined = client.post(
+        "/api/v1/reports",
+        json={**report_payload(), "includeBlackCard": True},
+    )
+
+    assert white.status_code == 200
+    assert combined.status_code == 200
+    assert combined.json()["cached"] is False
+    assert combined.json()["meta"]["cardTypes"] == ["white", "black"]
+    assert combined.json()["meta"]["totalUah"] == "800.00"
+    assert [item["cardType"] for item in combined.json()["expenses"]] == [
+        "white",
+        "black",
+    ]
+    assert combined.json()["reportId"] != white.json()["reportId"]
+    assert service.calls == 2
+
+
+def test_black_failure_does_not_cache_partial_report(tmp_path: Path) -> None:
+    resolved = settings(tmp_path)
+    service = FailsBlackOnceService()
+    app = create_app(
+        settings=resolved,
+        report_service=service,  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+    client = TestClient(app, raise_server_exceptions=False)
+    payload = {**report_payload(), "includeBlackCard": True}
+
+    failed = client.post("/api/v1/reports", json=payload)
+    succeeded = client.post("/api/v1/reports", json=payload)
+
+    assert failed.status_code == 502
+    assert succeeded.status_code == 200
+    assert succeeded.json()["cached"] is False
+    assert succeeded.json()["meta"]["cardTypes"] == ["white", "black"]
+    assert service.calls == 2
+
+
+def test_legacy_card_type_is_rejected(tmp_path: Path) -> None:
+    resolved = settings(tmp_path)
+    app = create_app(
+        settings=resolved,
+        report_service=FakeReportService(),  # type: ignore[arg-type]
+        report_cache=ReportCache(resolved.db_path, 60),
+    )
+
+    response = TestClient(app).post(
+        "/api/v1/reports",
+        json={**report_payload(), "cardType": "black"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "REQUEST_SCHEMA_INVALID"
