@@ -92,10 +92,15 @@ main { min-height: 100vh; margin-left: 232px; }
 .report-controls label { display: grid; gap: 7px; }
 .label { color: var(--muted-foreground); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--background); }
-.card-scope { display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.card-scope legend { grid-column: 1 / -1; margin-bottom: 7px; padding: 0; }
-.always-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--background); font-size: 13px; white-space: nowrap; }
-.always-card strong { color: var(--muted-foreground); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.card-selector { position: relative; display: grid; gap: 7px; min-width: 0; }
+.card-selector-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--background); font-size: 13px; text-align: left; }
+.card-selector-trigger svg { flex: none; color: var(--muted-foreground); transition: transform .16s ease; }
+.card-selector-trigger svg.open { transform: rotate(180deg); }
+.card-selector-options { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 100%; min-width: 170px; padding: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-raised); box-shadow: var(--shadow); }
+.card-selector-options label { display: flex !important; align-items: center; gap: 10px; min-height: 40px; padding: 8px; border-radius: 7px; font-size: 13px; cursor: pointer; }
+.card-selector-options label:hover { background: color-mix(in srgb, var(--primary) 7%, transparent); }
+.card-selector-options label:has(input:disabled) { color: var(--muted-foreground); cursor: not-allowed; }
+.card-selector-options input { flex: none; width: 17px; height: 17px; min-height: 17px; margin: 0; padding: 0; accent-color: var(--primary); }
 .switch-label { position: relative; display: flex !important; grid-auto-flow: column; gap: 8px; justify-content: start; align-items: center; min-height: 40px; color: var(--muted-foreground); font-size: 13px; }
 .switch-label input { position: absolute; z-index: 1; top: 50%; left: 0; width: 34px; height: 20px; min-height: 20px; margin: 0; opacity: 0; transform: translateY(-50%); cursor: pointer; }
 .switch { position: relative; width: 34px; height: 20px; border-radius: 20px; background: var(--border); }
@@ -180,7 +185,7 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
   .mobile-nav a.active { color: var(--primary); }
   .page { padding-top: 28px; padding-bottom: 90px; }
   .report-controls { grid-template-columns: 1fr 1fr; }
-  .card-scope, .report-controls > .switch-label, .primary-button { grid-column: span 2; }
+  .card-selector, .report-controls > .switch-label, .primary-button { grid-column: span 2; }
   .skeleton-grid, .metrics { grid-template-columns: 1fr 1fr; }
   .dashboard { grid-template-columns: 1fr; }
   .chart-card.wide, .metrics { grid-column: auto; }
@@ -193,8 +198,6 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
   .exports { width: 100%; }
   .exports a { flex: 1; justify-content: center; }
   .report-controls { grid-template-columns: 1fr 1fr; padding: 14px; }
-  .card-scope { grid-template-columns: 1fr; }
-  .card-scope legend { grid-column: auto; }
   .metrics, .skeleton-grid { grid-template-columns: 1fr; }
   .metric { padding: 16px; }
   .skeleton:nth-child(n+5) { grid-column: auto; }

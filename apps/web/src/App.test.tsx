@@ -73,7 +73,8 @@ describe('report flow', () => {
     const user = userEvent.setup()
     renderApp()
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Додати чорну картку' }))
+    await user.click(await screen.findByRole('button', { name: 'Картки Біла' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Чорна' }))
     await user.clear(screen.getByLabelText('Дата від'))
     await user.type(screen.getByLabelText('Дата від'), '2026-09-01')
     await user.clear(screen.getByLabelText('Дата до'))
@@ -82,7 +83,7 @@ describe('report flow', () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({
-      includeBlackCard: true,
+      cardTypes: ['white', 'black'],
       dateFrom: '2026-09-01',
       dateTo: '2026-09-05',
       includeHolds: true,

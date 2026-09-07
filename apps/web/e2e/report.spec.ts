@@ -5,18 +5,20 @@ test('generates and explores a report', async ({ page }) => {
   await page.route('**/api/v1/reports', async (route) => {
     const request = route.request().postDataJSON() as Record<string, unknown>
     requests.push(request)
-    const includeBlackCard = request.includeBlackCard === true
+    const cardTypes = request.cardTypes as string[]
+    const includesWhite = cardTypes.includes('white')
+    const includesBlack = cardTypes.includes('black')
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         reportId: 'rpt_browser',
         cached: false,
         meta: {
-          cardTypes: includeBlackCard ? ['white', 'black'] : ['white'],
+          cardTypes,
           dateFrom: '2026-09-01',
           dateTo: '2026-09-05',
           generatedAt: '2026-09-05T18:00:00+03:00',
-          transactionCount: includeBlackCard ? 2 : 1,
+          transactionCount: cardTypes.length,
           pendingCount: 0,
           totalUah: '640.00',
           totalEur: '13.18',
@@ -39,23 +41,25 @@ test('generates and explores a report', async ({ page }) => {
           },
         ],
         expenses: [
-          {
-            id: 'synthetic-white-expense',
-            occurredAt: '2026-09-01T13:45:00+03:00',
-            description: 'Тестовий магазин',
-            comment: '',
-            mcc: 5411,
-            category: 'Продукти',
-            amountOriginal: '640.00',
-            currencyOriginal: 'UAH',
-            amountUah: '640.00',
-            amountEur: '13.18',
-            rateUsed: '48.5584',
-            rateSource: 'nbu',
-            hold: false,
-            cardType: 'white',
-          },
-          ...(includeBlackCard
+          ...(includesWhite
+            ? [{
+                id: 'synthetic-white-expense',
+                occurredAt: '2026-09-01T13:45:00+03:00',
+                description: 'Тестовий магазин',
+                comment: '',
+                mcc: 5411,
+                category: 'Продукти',
+                amountOriginal: '640.00',
+                currencyOriginal: 'UAH',
+                amountUah: '640.00',
+                amountEur: '13.18',
+                rateUsed: '48.5584',
+                rateSource: 'nbu',
+                hold: false,
+                cardType: 'white',
+              }]
+            : []),
+          ...(includesBlack
             ? [{
                 id: 'synthetic-black-expense',
                 occurredAt: '2026-09-02T10:00:00+03:00',
@@ -81,8 +85,8 @@ test('generates and explores a report', async ({ page }) => {
   await page.goto('/overview')
   await page.getByRole('button', { name: 'Сформувати звіт' }).click()
 
-  expect(requests[0]).toEqual(expect.objectContaining({ includeBlackCard: false }))
-  await expect(page).not.toHaveURL(/(?:\?|&)black=/)
+  expect(requests[0]).toEqual(expect.objectContaining({ cardTypes: ['white'] }))
+  await expect(page).not.toHaveURL(/(?:\?|&)cards=/)
   await expect(page.getByText('Динаміка витрат')).toBeVisible()
   await expect(page.getByText('Тестовий магазин')).toBeVisible()
   await expect(page.locator('.report-meta').getByText('Біла картка', { exact: true })).toBeVisible()
@@ -98,10 +102,13 @@ test('generates and explores a report', async ({ page }) => {
   await page.getByRole('button', { name: 'Закрити' }).click()
   await page.getByRole('link', { name: 'Огляд' }).first().click()
 
-  await page.getByRole('checkbox', { name: 'Додати чорну картку' }).check()
+  await page.getByRole('button', { name: 'Картки Біла' }).click()
+  await page.getByRole('checkbox', { name: 'Чорна' }).check()
   await page.getByRole('button', { name: 'Сформувати звіт' }).click()
-  expect(requests[1]).toEqual(expect.objectContaining({ includeBlackCard: true }))
-  await expect(page).toHaveURL(/(?:\?|&)black=true(?:&|$)/)
+  expect(requests[1]).toEqual(expect.objectContaining({
+    cardTypes: ['white', 'black'],
+  }))
+  await expect(page).toHaveURL(/(?:\?|&)cards=white(?:%2C|,)black(?:&|$)/)
   await expect(page.getByText('Біла та чорна картки')).toBeVisible()
 
   await page.getByRole('link', { name: 'Транзакції' }).first().click()

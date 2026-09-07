@@ -161,6 +161,8 @@ export interface components {
             cardTypes: [
                 "white"
             ] | [
+                "black"
+            ] | [
                 "white",
                 "black"
             ];
@@ -191,10 +193,12 @@ export interface components {
         /** ReportRequest */
         ReportRequest: {
             /**
-             * Includeblackcard
-             * @default false
+             * Cardtypes
+             * @default [
+             *       "white"
+             *     ]
              */
-            includeBlackCard: boolean;
+            cardTypes: ("white" | "black")[];
             /**
              * Datefrom
              * Format: date
