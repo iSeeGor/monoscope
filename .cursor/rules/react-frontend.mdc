@@ -1,0 +1,26 @@
+---
+description: React and TypeScript architecture and UI conventions
+globs: "apps/web/src/**/*.{ts,tsx,css}"
+alwaysApply: false
+---
+
+# React Frontend Rules
+
+- Keep TypeScript strict and do not use `any` to bypass API or component types.
+- Consume generated OpenAPI types through entity mapping functions.
+- Use TanStack Query for server state, URL parameters for report filters, and
+  local React state for local interaction.
+- Do not add global state until a concrete cross-route requirement exists.
+- Route components compose features; they do not contain API client details,
+  chart configuration, or financial calculations.
+- Keep Recharts inside `shared/charts` and shadcn-based primitives inside
+  `shared/ui`.
+- Use semantic design tokens from `docs/design/ui-system.md`; do not hardcode
+  product colors in components.
+- Format money and Kyiv dates through shared utilities.
+- Provide initial, loading, empty, stale, and error states for data surfaces.
+- Preserve keyboard navigation, visible focus, reduced motion, and accessible
+  alternatives for charts.
+- Design every primary flow for 360 px and large desktop widths.
+- Add focused Testing Library coverage for behavior and axe checks for modified
+  interactive components.

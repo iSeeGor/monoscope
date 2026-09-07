@@ -1,0 +1,24 @@
+---
+description: Automated testing and fixture safety rules
+globs: "**/{tests,test,__tests__}/**/*"
+alwaysApply: false
+---
+
+# Testing Rules
+
+- Tests must be deterministic, isolated, and safe to run offline.
+- Use synthetic merchants, transaction IDs, comments, amounts, and tokens.
+- Never copy personal `.env`, API payloads, reports, or transaction data into
+  fixtures or snapshots.
+- Freeze or inject time for date-sensitive behavior.
+- Fake Monobank and rate providers at their interfaces; do not patch deep
+  implementation details when dependency injection is available.
+- Cover boundary behavior: inclusive dates, Kyiv timezone transitions, holds,
+  duplicate authorizations, unknown MCC, currencies, empty reports, and
+  upstream errors.
+- API tests assert status, stable error code, response schema, and secret
+  absence.
+- Frontend tests assert user-visible behavior rather than implementation state.
+- Keep one small end-to-end smoke path; prefer unit/integration tests for edge
+  cases.
+- A bug fix requires a regression test that fails before the fix.

@@ -1,0 +1,23 @@
+---
+description: Python core and FastAPI implementation conventions
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python Backend Rules
+
+- Target Python 3.11 or newer and add complete type hints to public functions.
+- Keep domain modules independent of FastAPI, Pydantic, SQLite, and HTTP.
+- Put orchestration in application services and external I/O behind injected
+  collaborators.
+- Use Pydantic models only at API and settings boundaries.
+- Prefer immutable dataclasses for domain values and explicit return types.
+- Never use live Monobank or NBU requests in automated tests.
+- Map internal/upstream exceptions in the API adapter; domain code must not
+  construct HTTP responses.
+- Use Kyiv-aware dates and timestamps. Never use naive datetimes.
+- Preserve money precision at contracts as decimal strings. Guard changes to
+  current float calculations with parity fixtures.
+- Keep synchronous blocking I/O outside async event-loop code.
+- Log request metadata and outcomes, not tokens or transaction payloads.
+- Run Ruff and pytest for touched Python code.

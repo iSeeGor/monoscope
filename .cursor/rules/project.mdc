@@ -1,0 +1,25 @@
+---
+description: Core architecture and delivery rules for Monoscope
+alwaysApply: true
+---
+
+# Project Rules
+
+- Read the relevant documents in `docs/` before changing behavior.
+- Preserve the existing CLI unless a task explicitly changes it.
+- Python is the source of truth for financial calculations; never duplicate
+  normalization, exchange-rate, category, or summary logic in the frontend.
+- Keep the Monobank token server-side. Never expose it through Vite variables,
+  URLs, responses, logs, fixtures, screenshots, or committed files.
+- Keep changes within the current roadmap phase and avoid speculative features.
+- Prefer small, reviewable commits that leave tests and builds passing.
+- Do not commit `.env`, reports, raw transactions, cache databases, or other
+  personal financial data.
+- Treat OpenAPI as the backend/frontend contract and regenerate TypeScript
+  types when it changes.
+- Add or update tests whenever calculation or public API behavior changes.
+- Use English for code and identifiers; Ukrainian is the default product copy.
+- Record a durable architectural decision in `docs/` instead of relying on chat
+  context.
+- Do not introduce Redis, PostgreSQL, SSR, global client state, or a second UI
+  framework without a demonstrated requirement and documented decision.
