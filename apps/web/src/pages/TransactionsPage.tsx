@@ -14,6 +14,7 @@ import { ListFilter, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ExpenseDetails } from '../entities/expense/ExpenseDetails'
 import { ExpenseRows } from '../entities/expense/ExpenseRows'
+import { ExpenseTotals } from '../entities/expense/ExpenseTotals'
 import { InitialReportState } from '../features/report/ReportStates'
 import type { Expense, Report } from '../shared/api/client'
 
@@ -77,6 +78,7 @@ export default function TransactionsPage({ report }: { report: Report | null }) 
           <select id="status-filter" name="statusFilter" aria-label="Статус" onChange={(event) => setStatus(event.target.value)}><option value="all">Усі статуси</option><option value="complete">Завершено</option><option value="hold">Холд</option></select>
           <select id="transaction-sort" name="transactionSort" aria-label="Сортування" defaultValue="date-desc" onChange={(event) => setSort(event.target.value)}><option value="date-desc">Спочатку нові</option><option value="date-asc">Спочатку старі</option><option value="amount-desc">Сума: від більшої</option><option value="amount-asc">Сума: від меншої</option></select>
         </section>
+        {expenses.length > 0 && <ExpenseTotals expenses={expenses} filtered={expenses.length !== report.expenses.length} />}
         {expenses.length ? <section className="transactions-card card"><div className="table-head"><span>Операція</span><span>Статус</span><span>Сума</span></div><ExpenseRows expenses={expenses} select={setSelected} showCard={combinedCards} /></section> : <section className="state-card card"><h2>Нічого не знайдено</h2><p>Змініть пошук або фільтри.</p></section>}
       </>}
       {selected && <ExpenseDetails expense={selected} close={() => setSelected(null)} />}

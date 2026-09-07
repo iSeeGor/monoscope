@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -116,6 +116,25 @@ describe('report flow', () => {
 
     expect(screen.getByText('Тестова книгарня')).toBeInTheDocument()
     expect(screen.queryByText('Сільпо')).not.toBeInTheDocument()
+  })
+
+  it('totals the transactions left by the category filter', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(report), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(await screen.findByRole('button', { name: 'Сформувати звіт' }))
+    await screen.findByText('Сільпо')
+
+    await user.click(screen.getAllByRole('link', { name: 'Транзакції' })[0])
+    const summary = await screen.findByRole('region', { name: 'Підсумок показаних транзакцій' })
+    expect(within(summary).getByText(/940,00/)).toBeInTheDocument()
+    expect(within(summary).getByText(/19,36/)).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Категорія'), 'Продукти')
+
+    expect(within(summary).getByText(/640,00/)).toBeInTheDocument()
+    expect(within(summary).getByText(/13,18/)).toBeInTheDocument()
+    expect(within(summary).queryByText(/940,00/)).not.toBeInTheDocument()
   })
 
   it('translates stable API errors for the user', async () => {

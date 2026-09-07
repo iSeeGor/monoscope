@@ -124,6 +124,7 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
 @keyframes pulse { to { background-position: -200% 0; } }
 .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
 .metrics { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.metrics.compact { grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
 .metric { display: grid; gap: 7px; padding: 19px; }
 .metric > span, .metric small { color: var(--muted-foreground); font-size: 12px; }
 .metric strong { font-size: clamp(1.25rem, 2vw, 1.65rem); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
@@ -190,7 +191,7 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
   .page { padding-top: 28px; padding-bottom: 90px; }
   .report-controls { grid-template-columns: 1fr 1fr; }
   .card-selector, .report-controls > .switch-label, .primary-button { grid-column: span 2; }
-  .skeleton-grid, .metrics { grid-template-columns: 1fr 1fr; }
+  .skeleton-grid, .metrics, .metrics.compact { grid-template-columns: 1fr 1fr; }
   .dashboard { grid-template-columns: 1fr; }
   .chart-card.wide, .metrics { grid-column: auto; }
   .filters, .filters.combined-cards { grid-template-columns: 1fr 1fr; }
@@ -202,8 +203,10 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
   .exports { width: 100%; }
   .exports a { flex: 1; justify-content: center; }
   .report-controls { grid-template-columns: 1fr 1fr; padding: 14px; }
-  .metrics, .skeleton-grid { grid-template-columns: 1fr; }
+  .metrics, .metrics.compact, .skeleton-grid { grid-template-columns: 1fr; }
   .metric { padding: 16px; }
+  .metrics.compact .metric { grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 12px; padding: 13px 16px; }
+  .metrics.compact .metric strong { font-size: 1.15rem; }
   .skeleton:nth-child(n+5) { grid-column: auto; }
   .chart-card, .recent { padding: 15px; }
   .chart { height: 230px; }
