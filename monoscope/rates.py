@@ -108,10 +108,20 @@ class RateLookup:
                 cross = item.get("rateCross")
                 if cross:
                     return float(cross)
+                # Fiat pairs, including EUR/UAH, normally publish bid/ask
+                # prices instead of ``rateCross``.  We need the price of one
+                # unit of A in B, so use the sell price (the conservative
+                # conversion from UAH to the foreign currency).
+                sell = item.get("rateSell")
+                if sell:
+                    return float(sell)
             if item.get("currencyCodeA") == code_b and item.get("currencyCodeB") == code_a:
                 cross = item.get("rateCross")
                 if cross:
                     return 1.0 / float(cross)
+                buy = item.get("rateBuy")
+                if buy:
+                    return 1.0 / float(buy)
         return None
 
 
