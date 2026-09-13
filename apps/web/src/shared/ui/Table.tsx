@@ -9,7 +9,7 @@ export function Table({ className, ...props }: ComponentProps<'table'>) {
 }
 
 export function TableHeader({ className, ...props }: ComponentProps<'thead'>) {
-  return <thead data-slot="table-header" className={classes('[&_tr]:border-b', className)} {...props} />
+  return <thead data-slot="table-header" className={classes('[&_tr]:border-b [&_tr]:border-[var(--border)]', className)} {...props} />
 }
 
 export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
@@ -17,11 +17,11 @@ export function TableBody({ className, ...props }: ComponentProps<'tbody'>) {
 }
 
 export function TableFooter({ className, ...props }: ComponentProps<'tfoot'>) {
-  return <tfoot data-slot="table-footer" className={classes('border-t bg-[color-mix(in_srgb,var(--primary)_8%,transparent)] font-medium', className)} {...props} />
+  return <tfoot data-slot="table-footer" className={classes('border-t border-[var(--border)] font-medium [&_tr:last-child]:border-b-0', className)} {...props} />
 }
 
 export function TableRow({ className, ...props }: ComponentProps<'tr'>) {
-  return <tr data-slot="table-row" className={classes('border-b transition-colors hover:bg-[color-mix(in_srgb,var(--primary)_4%,transparent)]', className)} {...props} />
+  return <tr data-slot="table-row" className={classes('border-b border-[var(--border)] transition-colors hover:bg-[color-mix(in_srgb,var(--primary)_4%,transparent)]', className)} {...props} />
 }
 
 export function TableHead({ className, ...props }: ComponentProps<'th'>) {

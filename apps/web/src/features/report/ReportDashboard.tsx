@@ -19,8 +19,8 @@ export function ReportDashboard({ report }: { report: Report }) {
         <MetricCard label="Операції" value={String(report.meta.transactionCount)} note="Витратних транзакцій" />
         <MetricCard label="В очікуванні" value={String(report.meta.pendingCount)} note="Незавершених операцій" />
       </section>
-      <SpendingTrendChart daily={report.daily} />
       <CategorySummaryTable report={report} />
+      <SpendingTrendChart daily={report.daily} />
       <CategoryBarChart categories={report.categories} />
       <section className="card recent">
         <div className="card-heading"><div><h2>Останні транзакції</h2><p>Найновіші у звіті</p></div><NavLink to="/transactions">Усі</NavLink></div>

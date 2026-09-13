@@ -4,11 +4,11 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 
 export function CategorySummaryTable({ report }: { report: Report }) {
   return (
-    <section className="card col-span-full overflow-hidden">
-      <div className="flex items-start justify-between gap-4 px-5 pt-5">
+    <section className="card recent col-span-full">
+      <div className="card-heading">
         <div>
           <h2>Усі категорії</h2>
-          <p className="m-0 text-xs text-[var(--muted-foreground)]">Повна структура витрат за обраний період</p>
+          <p>Повна структура витрат за обраний період</p>
         </div>
         <span className="shrink-0 text-xs text-[var(--muted-foreground)]">{report.categories.length} категорій</span>
       </div>
