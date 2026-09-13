@@ -5,6 +5,7 @@ import { CategoryBarChart } from '../../shared/charts/CategoryBarChart'
 import { SpendingTrendChart } from '../../shared/charts/SpendingTrendChart'
 import { formatMoney } from '../../shared/format'
 import { MetricCard } from '../../shared/ui/MetricCard'
+import { CategorySummaryTable } from './CategorySummaryTable'
 import { EmptyReportState } from './ReportStates'
 
 export function ReportDashboard({ report }: { report: Report }) {
@@ -19,6 +20,7 @@ export function ReportDashboard({ report }: { report: Report }) {
         <MetricCard label="В очікуванні" value={String(report.meta.pendingCount)} note="Незавершених операцій" />
       </section>
       <SpendingTrendChart daily={report.daily} />
+      <CategorySummaryTable report={report} />
       <CategoryBarChart categories={report.categories} />
       <section className="card recent">
         <div className="card-heading"><div><h2>Останні транзакції</h2><p>Найновіші у звіті</p></div><NavLink to="/transactions">Усі</NavLink></div>
