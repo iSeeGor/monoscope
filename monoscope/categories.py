@@ -21,6 +21,7 @@ CUSTOM_RULES: list[Rule] = [
     Rule(category="Підписки та AI", description="OpenAI", mcc=frozenset({5734})),
     Rule(category="Підписки та AI", description="Claude", mcc=frozenset({5734})),
     Rule(category="Кафе та ресторани", description="FRESH ZONE 2014 LTD", mcc=frozenset({5411})),
+    Rule(category="Кафе та ресторани", description="NEWCOFFEE LTD", mcc=frozenset({5499})),
 ]
 
 MCC_CATEGORIES: dict[int, str] = {
