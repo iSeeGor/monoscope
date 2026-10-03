@@ -13,6 +13,7 @@ BASE_URL = "https://api.monobank.ua"
 REQUEST_TIMEOUT = 30
 MAX_STATEMENT_SECONDS = 31 * 86400
 RATE_LIMIT_SECONDS = 61
+UAH_CURRENCY_CODE = 980
 
 
 class MonobankError(Exception):
@@ -92,12 +93,21 @@ class MonobankClient:
                 raise MonobankError(
                     f"No account with type {card_type!r}. Available types: {available}"
                 )
-            if len(matches) > 1:
+            if len(matches) == 1:
+                found[card_type] = matches[0]
+                continue
+
+            uah_matches = [
+                account
+                for account in matches
+                if account.get("currencyCode") == UAH_CURRENCY_CODE
+            ]
+            if len(uah_matches) != 1:
                 raise MonobankError(
                     f"Multiple accounts with type {card_type!r}; "
-                    "specify a different filter."
+                    "could not resolve a unique UAH account."
                 )
-            found[card_type] = matches[0]
+            found[card_type] = uah_matches[0]
         return found
 
     def _wait_for_statement_slot(self) -> None:

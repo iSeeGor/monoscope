@@ -87,9 +87,11 @@ so tests can use deterministic fakes without network access.
    calculation version, and a one-way token fingerprint.
 3. A fresh cached report is returned when available.
 4. Otherwise the report service resolves all requested accounts with one
-   client-info lookup. It fetches and normalizes each card statement separately,
-   tags every normalized expense with its source card, then merges and sorts
-   the expenses before summarizing and storing the serialized result.
+   client-info lookup. If Monobank returns the same card type for accounts in
+   multiple currencies, the service selects its UAH account. It fetches and
+   normalizes each card statement separately, tags every normalized expense
+   with its source card, then merges and sorts the expenses before summarizing
+   and storing the serialized result.
 5. FastAPI returns the report with a stable report ID.
 6. Export endpoints read the same cached report by ID.
 

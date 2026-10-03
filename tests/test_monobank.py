@@ -1,9 +1,12 @@
 from typing import Any
 
+import pytest
+
 from monoscope.monobank import (
     MAX_STATEMENT_SECONDS,
     RATE_LIMIT_SECONDS,
     MonobankClient,
+    MonobankError,
     _statement_windows,
 )
 
@@ -69,6 +72,35 @@ def test_find_accounts_uses_one_client_info_lookup() -> None:
     assert client.client_info_calls == 1
     assert accounts["white"]["id"] == "white-id"
     assert accounts["black"]["id"] == "black-id"
+
+
+def test_find_accounts_prefers_uah_account_for_duplicate_card_type() -> None:
+    client = FakeMonobankClient(FakeClock())
+    client.get_client_info = lambda: {
+        "accounts": [
+            {"id": "white-id", "type": "white", "currencyCode": 980},
+            {"id": "black-eur-id", "type": "black", "currencyCode": 978},
+            {"id": "black-uah-id", "type": "black", "currencyCode": 980},
+        ]
+    }
+
+    accounts = client.find_accounts(("white", "black"))
+
+    assert accounts["white"]["id"] == "white-id"
+    assert accounts["black"]["id"] == "black-uah-id"
+
+
+def test_find_accounts_rejects_duplicate_type_without_unique_uah_account() -> None:
+    client = FakeMonobankClient(FakeClock())
+    client.get_client_info = lambda: {
+        "accounts": [
+            {"id": "black-eur-id", "type": "black", "currencyCode": 978},
+            {"id": "black-usd-id", "type": "black", "currencyCode": 840},
+        ]
+    }
+
+    with pytest.raises(MonobankError, match="unique UAH account"):
+        client.find_accounts(("black",))
 
 
 def test_statement_rate_limit_applies_across_separate_ranges() -> None:
