@@ -17,9 +17,10 @@ class Rule:
 
 
 CUSTOM_RULES: list[Rule] = [
-    Rule(category="Підписки та AI", description="google", mcc=frozenset({7399})),
-    Rule(category="Підписки та AI", description="openai", mcc=frozenset({5734})),
-    Rule(category="Підписки та AI", description="claude", mcc=frozenset({5734})),
+    Rule(category="Підписки та AI", description="Google", mcc=frozenset({7399})),
+    Rule(category="Підписки та AI", description="OpenAI", mcc=frozenset({5734})),
+    Rule(category="Підписки та AI", description="Claude", mcc=frozenset({5734})),
+    Rule(category="Кафе та ресторани", description="FRESH ZONE 2014 LTD", mcc=frozenset({5411})),
 ]
 
 MCC_CATEGORIES: dict[int, str] = {
@@ -140,7 +141,7 @@ def categorize(mcc: int | None, description: str) -> str:
     for rule in CUSTOM_RULES:
         if rule.mcc and mcc not in rule.mcc:
             continue
-        if rule.description not in desc:
+        if rule.description.casefold() not in desc:
             continue
         return rule.category
     return category_for_mcc(mcc)

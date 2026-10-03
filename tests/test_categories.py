@@ -15,3 +15,4 @@ def test_custom_rule_requires_description_and_matching_mcc() -> None:
 
 def test_custom_rule_matching_is_case_insensitive() -> None:
     assert categorize(7399, "Google One") == "Підписки та AI"
+    assert categorize(5411, "fresh zone 2014 ltd") == "Кафе та ресторани"
