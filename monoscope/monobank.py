@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import time
 from collections.abc import Callable, Iterator
 from datetime import datetime
@@ -13,6 +14,7 @@ BASE_URL = "https://api.monobank.ua"
 REQUEST_TIMEOUT = 30
 MAX_STATEMENT_SECONDS = 31 * 86400
 RATE_LIMIT_SECONDS = 61
+CLIENT_INFO_CACHE_SECONDS = 24 * 60 * 60
 UAH_CURRENCY_CODE = 980
 
 
@@ -42,14 +44,36 @@ class MonobankClient:
         self._clock = clock
         self._sleep = sleep
         self._last_statement_at: float | None = None
+        self._statement_slot_lock = threading.Lock()
+        self._client_info: dict[str, Any] | None = None
+        self._client_info_loaded_at: float | None = None
+        self._client_info_lock = threading.Lock()
 
     def get_client_info(self) -> dict[str, Any]:
-        return self._get("/personal/client-info")
+        now = self._clock()
+        with self._client_info_lock:
+            if (
+                self._client_info is not None
+                and self._client_info_loaded_at is not None
+                and now - self._client_info_loaded_at < CLIENT_INFO_CACHE_SECONDS
+            ):
+                return self._client_info
+
+            data = self._get("/personal/client-info")
+            if not isinstance(data, dict):
+                raise MonobankError("Unexpected client-info response format")
+            self._client_info = data
+            self._client_info_loaded_at = self._clock()
+            return data
 
     def get_statement(
         self, account_id: str, from_ts: int, to_ts: int
     ) -> list[dict[str, Any]]:
-        self._wait_for_statement_slot()
+        # Monobank applies the statement limit across accounts. Reserve the
+        # next slot atomically so concurrent API requests cannot start
+        # overlapping upstream calls after waiting on the same timestamp.
+        with self._statement_slot_lock:
+            self._wait_for_statement_slot()
         path = f"/personal/statement/{account_id}/{from_ts}/{to_ts}"
         data = self._get(path)
         if not isinstance(data, list):

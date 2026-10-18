@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, Settings, WalletCards } from 'lucide-react'
+import { BriefcaseBusiness, ChartNoAxesCombined, Settings, WalletCards } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { ThemeButton } from './theme'
@@ -7,6 +7,7 @@ import type { Theme } from './useTheme'
 const links = [
   { to: '/overview', label: 'Огляд', icon: ChartNoAxesCombined },
   { to: '/transactions', label: 'Транзакції', icon: WalletCards },
+  { to: '/accounts', label: 'Рахунки', icon: BriefcaseBusiness },
   { to: '/settings', label: 'Налаштування', icon: Settings },
 ]
 

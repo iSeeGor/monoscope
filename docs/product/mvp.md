@@ -53,6 +53,15 @@ is no registration, remote account, or shared workspace in the MVP.
 - transaction details panel;
 - clear pending-operation badge.
 
+### FOP accounts
+
+- current balance, currency, and IBAN for every available FOP account;
+- a complete statement with both incoming and outgoing transactions;
+- the last 30 inclusive days by default and a custom range up to 31 days;
+- local direction filtering without another API request;
+- payment details including counterparty, EDRPOU, IBAN, purpose, operation
+  amount, balance after the transaction, and invoice or receipt identifiers.
+
 ### Report controls
 
 - month picker;
@@ -86,6 +95,7 @@ must not make them unnecessarily difficult to add.
 
 - `/overview` — report controls, KPIs, charts, and recent transactions;
 - `/transactions` — full filterable transaction list;
+- `/accounts` — FOP balances and complete account statements;
 - `/settings` — local display preferences and diagnostics; a minimal shell in
   the MVP is acceptable.
 

@@ -8,6 +8,7 @@ import { useTheme } from './useTheme'
 const OverviewPage = lazy(() => import('../pages/OverviewPage'))
 const TransactionsPage = lazy(() => import('../pages/TransactionsPage'))
 const SettingsPage = lazy(() => import('../pages/SettingsPage'))
+const AccountsPage = lazy(() => import('../pages/AccountsPage'))
 
 export default function App() {
   const [report, setReport] = useState<Report | null>(null)
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/overview" replace />} />
           <Route path="/overview" element={<OverviewPage report={report} mutation={mutation} />} />
           <Route path="/transactions" element={<TransactionsPage report={report} />} />
+          <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/settings" element={<SettingsPage theme={theme} setTheme={setTheme} />} />
           <Route path="*" element={<Navigate to="/overview" replace />} />
         </Routes>

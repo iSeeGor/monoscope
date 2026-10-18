@@ -108,6 +108,62 @@ class ReportResponse(ApiModel):
     expenses: list[ExpenseResponse]
 
 
+class AccountResponse(ApiModel):
+    id: str
+    type: Literal["fop"]
+    currency: str
+    balance: Decimal
+    iban: str
+    name: str
+
+
+class AccountsResponse(ApiModel):
+    accounts: list[AccountResponse]
+
+
+class StatementRequest(ApiModel):
+    model_config = ConfigDict(extra="forbid")
+
+    date_from: date
+    date_to: date
+
+    @model_validator(mode="after")
+    def validate_date_range(self) -> "StatementRequest":
+        if self.date_to < self.date_from:
+            raise ValueError("dateTo must be on or after dateFrom")
+        if (self.date_to - self.date_from).days + 1 > 31:
+            raise ValueError("Date range must not exceed 31 inclusive days")
+        if self.date_to > datetime.now(KYIV).date():
+            raise ValueError("dateTo must not be in the future")
+        return self
+
+
+class AccountTransactionResponse(ApiModel):
+    id: str
+    occurred_at: datetime
+    description: str
+    comment: str
+    amount: Decimal
+    currency: str
+    operation_amount: Decimal
+    operation_currency: str
+    balance_after: Decimal
+    hold: bool
+    direction: Literal["incoming", "outgoing"]
+    counter_name: str | None
+    counter_edrpou: str | None
+    counter_iban: str | None
+    invoice_id: str | None
+    receipt_id: str | None
+
+
+class StatementResponse(ApiModel):
+    account_id: str
+    date_from: date
+    date_to: date
+    transactions: list[AccountTransactionResponse]
+
+
 class HealthResponse(ApiModel):
     status: Literal["ok"]
     version: str

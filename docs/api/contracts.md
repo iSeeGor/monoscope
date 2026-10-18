@@ -128,6 +128,20 @@ currency_original,amount_eur,rate_used,rate_source,hold,id,card_type
 `amount_uah` may be appended as a new column after `amount_eur`; existing
 columns must not be renamed silently.
 
+## FOP accounts
+
+`GET /accounts` returns only accounts whose Monobank type is `fop`. Each item
+contains `id`, `type`, `name`, `currency`, `balance`, and `iban`.
+The list is discovered through Monobank `client-info`, cached for 24 hours,
+and ordered with UAH first.
+
+`POST /accounts/{accountId}/statement` accepts an inclusive `dateFrom` and
+`dateTo` range of at most 31 days. The response keeps signed account and
+operation amounts and includes `direction`, `balanceAfter`, `hold`, payment
+description/comment, counterparty name, EDRPOU, IBAN, and optional invoice and
+receipt identifiers. Transactions are ordered newest first. A non-FOP or
+unknown account ID returns `404 ACCOUNT_NOT_FOUND`.
+
 ## Errors
 
 All handled errors use:
@@ -149,6 +163,8 @@ Expected status mapping:
 
 - `401 MONOBANK_UNAUTHORIZED` for an invalid configured token;
 - `404 REPORT_NOT_FOUND` for an unknown or expired export report;
+- `404 ACCOUNT_NOT_FOUND` for a statement requested for an unavailable FOP
+  account;
 - `422 REQUEST_SCHEMA_INVALID` for malformed fields or invalid date ranges;
 - `429 MONOBANK_RATE_LIMITED` for upstream request limits;
 - `502 MONOBANK_UNAVAILABLE` for upstream failures;

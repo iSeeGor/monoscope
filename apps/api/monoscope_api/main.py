@@ -9,10 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.monoscope_api.cache import ReportCache
 from apps.api.monoscope_api.errors import register_exception_handlers
+from apps.api.monoscope_api.routers.accounts import router as accounts_router
 from apps.api.monoscope_api.routers.health import router as health_router
 from apps.api.monoscope_api.routers.reports import router as reports_router
 from apps.api.monoscope_api.settings import Settings
 from monoscope import __version__
+from monoscope.accounts import AccountService
 from monoscope.monobank import MonobankClient
 from monoscope.rates import RateLookup
 from monoscope.service import ReportService
@@ -25,6 +27,7 @@ def create_app(
     settings: Settings | None = None,
     report_service: ReportService | None = None,
     report_cache: ReportCache | None = None,
+    account_service: AccountService | None = None,
 ) -> FastAPI:
     resolved_settings = settings or Settings()
     logging.basicConfig(
@@ -39,9 +42,15 @@ def create_app(
         redoc_url=None,
     )
     application.state.settings = resolved_settings
+    monobank_client = MonobankClient(
+        resolved_settings.monobank_token.get_secret_value()
+    )
     application.state.report_service = report_service or ReportService(
-        MonobankClient(resolved_settings.monobank_token.get_secret_value()),
+        monobank_client,
         RateLookup(),
+    )
+    application.state.account_service = account_service or AccountService(
+        monobank_client,
     )
     application.state.report_cache = report_cache or ReportCache(
         resolved_settings.db_path,
@@ -77,5 +86,6 @@ def create_app(
         return response
 
     application.include_router(health_router, prefix="/api/v1")
+    application.include_router(accounts_router, prefix="/api/v1")
     application.include_router(reports_router, prefix="/api/v1")
     return application

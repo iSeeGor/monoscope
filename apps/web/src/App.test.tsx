@@ -68,6 +68,17 @@ afterEach(() => {
 })
 
 describe('report flow', () => {
+  it('explains the Monobank cooldown while a report is loading', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}))
+    const user = userEvent.setup()
+    renderApp()
+
+    await user.click(await screen.findByRole('button', { name: 'Сформувати звіт' }))
+
+    expect(await screen.findByText('Формуємо звіт')).toBeInTheDocument()
+    expect(screen.getByText(/Monobank може очікувати наступний доступний запит близько хвилини/)).toBeInTheDocument()
+  })
+
   it('submits explicit report controls with selected values', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(report), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const user = userEvent.setup()

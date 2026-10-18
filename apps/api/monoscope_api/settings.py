@@ -30,7 +30,6 @@ class Settings(BaseSettings):
         default="INFO",
         validation_alias="MONOSCOPE_LOG_LEVEL",
     )
-
     @property
     def allowed_origins(self) -> list[str]:
         return [

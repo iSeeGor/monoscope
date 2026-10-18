@@ -45,6 +45,10 @@ React UI -> HTTP/OpenAPI -> FastAPI adapters -> report service
                                              -> Monobank and NBU clients
 ```
 
+FOP account statements use a separate `AccountService` because they preserve
+both positive and negative operations and bank payment metadata, while the
+report service intentionally normalizes only expenses.
+
 - Domain and report service code must not import FastAPI, Pydantic, SQLite, or
   frontend concepts.
 - FastAPI maps HTTP schemas to domain parameters and maps domain results back
@@ -94,6 +98,13 @@ so tests can use deterministic fakes without network access.
    and storing the serialized result.
 5. FastAPI returns the report with a stable report ID.
 6. Export endpoints read the same cached report by ID.
+
+The account flow loads `GET /accounts` and then requests
+`POST /accounts/{account_id}/statement` only after an explicit user action.
+Account metadata is discovered through Monobank `client-info`, ordered with
+UAH first, and cached in memory for 24 hours. Opening the accounts route alone
+therefore does not consume a statement request. Statement responses are not
+persisted and accept at most 31 inclusive days.
 
 The MVP web API accepts at most 31 inclusive days. The existing CLI retains
 long-range chunking. A later job queue can remove the web limit without

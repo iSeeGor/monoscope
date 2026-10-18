@@ -21,6 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_api_v1_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get Statement */
+        post: operations["get_statement_api_v1_accounts__account_id__statement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports": {
         parameters: {
             query?: never;
@@ -76,6 +110,70 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountResponse */
+        AccountResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "fop";
+            /** Currency */
+            currency: string;
+            /** Balance */
+            balance: string;
+            /** Iban */
+            iban: string;
+            /** Name */
+            name: string;
+        };
+        /** AccountTransactionResponse */
+        AccountTransactionResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Occurredat
+             * Format: date-time
+             */
+            occurredAt: string;
+            /** Description */
+            description: string;
+            /** Comment */
+            comment: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Operationamount */
+            operationAmount: string;
+            /** Operationcurrency */
+            operationCurrency: string;
+            /** Balanceafter */
+            balanceAfter: string;
+            /** Hold */
+            hold: boolean;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "incoming" | "outgoing";
+            /** Countername */
+            counterName: string | null;
+            /** Counteredrpou */
+            counterEdrpou: string | null;
+            /** Counteriban */
+            counterIban: string | null;
+            /** Invoiceid */
+            invoiceId: string | null;
+            /** Receiptid */
+            receiptId: string | null;
+        };
+        /** AccountsResponse */
+        AccountsResponse: {
+            /** Accounts */
+            accounts: components["schemas"]["AccountResponse"][];
+        };
         /** CategorySummaryResponse */
         CategorySummaryResponse: {
             /** Category */
@@ -229,6 +327,36 @@ export interface components {
             /** Expenses */
             expenses: components["schemas"]["ExpenseResponse"][];
         };
+        /** StatementRequest */
+        StatementRequest: {
+            /**
+             * Datefrom
+             * Format: date
+             */
+            dateFrom: string;
+            /**
+             * Dateto
+             * Format: date
+             */
+            dateTo: string;
+        };
+        /** StatementResponse */
+        StatementResponse: {
+            /** Accountid */
+            accountId: string;
+            /**
+             * Datefrom
+             * Format: date
+             */
+            dateFrom: string;
+            /**
+             * Dateto
+             * Format: date
+             */
+            dateTo: string;
+            /** Transactions */
+            transactions: components["schemas"]["AccountTransactionResponse"][];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -267,6 +395,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    list_accounts_api_v1_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountsResponse"];
+                };
+            };
+        };
+    };
+    get_statement_api_v1_accounts__account_id__statement_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

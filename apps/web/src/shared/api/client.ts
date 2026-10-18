@@ -33,6 +33,11 @@ export type Report = {
   expenses: Expense[]
 }
 
+export type Account = components['schemas']['AccountResponse']
+export type AccountTransaction = components['schemas']['AccountTransactionResponse']
+export type StatementRequest = components['schemas']['StatementRequest']
+export type AccountStatement = components['schemas']['StatementResponse']
+
 type ApiErrorBody = {
   error?: { code?: string; message?: string; requestId?: string }
   detail?: Array<{ msg?: string }>
@@ -51,6 +56,7 @@ const errorMessages: Record<string, string> = {
     'Цей звіт уже недоступний. Сформуйте його повторно.',
   REQUEST_SCHEMA_INVALID:
     'Перевірте параметри звіту.',
+  ACCOUNT_NOT_FOUND: 'Рахунок не знайдено. Оновіть список рахунків.',
 }
 
 export class ApiError extends Error {
@@ -64,23 +70,17 @@ export class ApiError extends Error {
   }
 }
 
-export async function createReport(request: ReportRequest): Promise<Report> {
+async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
-    response = await fetch(`${API_BASE_URL}/reports`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    })
+    response = await fetch(`${API_BASE_URL}${path}`, init)
   } catch {
     throw new ApiError('Немає зв’язку з API. Перевірте, чи запущено сервер.', 0)
   }
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ApiErrorBody
-    const translated = body.error?.code
-      ? errorMessages[body.error.code]
-      : undefined
+    const translated = body.error?.code ? errorMessages[body.error.code] : undefined
     const fallback =
       response.status === 401
         ? 'Токен Monobank недійсний. Перевірте налаштування сервера.'
@@ -88,7 +88,7 @@ export async function createReport(request: ReportRequest): Promise<Report> {
           ? 'Monobank тимчасово обмежив запити. Спробуйте пізніше.'
           : response.status === 502
             ? 'Monobank зараз недоступний. Спробуйте ще раз.'
-            : 'Не вдалося сформувати звіт.'
+            : 'Не вдалося завантажити дані.'
     throw new ApiError(
       translated ?? body.error?.message ?? body.detail?.[0]?.msg ?? fallback,
       response.status,
@@ -96,11 +96,35 @@ export async function createReport(request: ReportRequest): Promise<Report> {
     )
   }
 
-  const transport = (await response.json()) as ReportTransport
+  return response.json() as Promise<T>
+}
+
+export async function createReport(request: ReportRequest): Promise<Report> {
+  const transport = await requestJson<ReportTransport>('/reports', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  })
   return {
     ...transport,
     expenses: transport.expenses.map((expense) => ({ ...expense })),
   }
+}
+
+export async function getAccounts(): Promise<Account[]> {
+  const response = await requestJson<components['schemas']['AccountsResponse']>('/accounts')
+  return response.accounts
+}
+
+export async function getAccountStatement(accountId: string, request: StatementRequest): Promise<AccountStatement> {
+  return requestJson<AccountStatement>(
+    `/accounts/${encodeURIComponent(accountId)}/statement`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    },
+  )
 }
 
 export function exportUrl(reportId: string, format: 'csv' | 'md') {

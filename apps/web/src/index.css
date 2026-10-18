@@ -183,7 +183,7 @@ input, select { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px so
   .sidebar { display: none; }
   main { margin-left: 0; }
   .mobile-header { display: flex; position: sticky; top: 0; z-index: 20; justify-content: space-between; align-items: center; height: 60px; padding: 0 18px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); }
-  .mobile-nav { display: grid; position: fixed; z-index: 30; bottom: 0; left: 0; right: 0; grid-template-columns: repeat(3, 1fr); height: 64px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--border); background: var(--surface); }
+  .mobile-nav { display: grid; position: fixed; z-index: 30; bottom: 0; left: 0; right: 0; grid-template-columns: repeat(4, 1fr); height: 64px; padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid var(--border); background: var(--surface); }
   .mobile-nav a { display: grid; place-content: center; justify-items: center; gap: 3px; color: var(--muted-foreground); font-size: 10px; }
   .mobile-nav a.active { color: var(--primary); }
   .page { padding-top: 28px; padding-bottom: 90px; }

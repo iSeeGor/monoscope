@@ -1,8 +1,11 @@
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pytest
 
 from monoscope.monobank import (
+    CLIENT_INFO_CACHE_SECONDS,
     MAX_STATEMENT_SECONDS,
     RATE_LIMIT_SECONDS,
     MonobankClient,
@@ -30,16 +33,15 @@ class FakeMonobankClient(MonobankClient):
         self.client_info_calls = 0
         self.paths: list[str] = []
 
-    def get_client_info(self) -> dict[str, Any]:
-        self.client_info_calls += 1
-        return {
-            "accounts": [
-                {"id": "white-id", "type": "white"},
-                {"id": "black-id", "type": "black"},
-            ]
-        }
-
     def _get(self, path: str) -> Any:
+        if path == "/personal/client-info":
+            self.client_info_calls += 1
+            return {
+                "accounts": [
+                    {"id": "white-id", "type": "white"},
+                    {"id": "black-id", "type": "black"},
+                ]
+            }
         self.paths.append(path)
         return []
 
@@ -72,6 +74,21 @@ def test_find_accounts_uses_one_client_info_lookup() -> None:
     assert client.client_info_calls == 1
     assert accounts["white"]["id"] == "white-id"
     assert accounts["black"]["id"] == "black-id"
+
+
+def test_client_info_cache_is_shared_with_account_lookups_and_expires() -> None:
+    clock = FakeClock()
+    client = FakeMonobankClient(clock)
+
+    client.get_client_info()
+    client.find_accounts(("white", "black"))
+
+    assert client.client_info_calls == 1
+
+    clock.now = CLIENT_INFO_CACHE_SECONDS
+    client.get_client_info()
+
+    assert client.client_info_calls == 2
 
 
 def test_find_accounts_prefers_uah_account_for_duplicate_card_type() -> None:
@@ -115,3 +132,40 @@ def test_statement_rate_limit_applies_across_separate_ranges() -> None:
         "/personal/statement/white-id/100/200",
         "/personal/statement/black-id/100/200",
     ]
+
+
+def test_concurrent_statement_requests_reserve_rate_limit_slots_serially() -> None:
+    active_sleeps = 0
+    max_active_sleeps = 0
+    tracker_lock = threading.Lock()
+    start = threading.Barrier(3)
+
+    def tracked_sleep(seconds: float) -> None:
+        nonlocal active_sleeps, max_active_sleeps
+        assert seconds == RATE_LIMIT_SECONDS
+        with tracker_lock:
+            active_sleeps += 1
+            max_active_sleeps = max(max_active_sleeps, active_sleeps)
+        threading.Event().wait(0.02)
+        with tracker_lock:
+            active_sleeps -= 1
+
+    client = FakeMonobankClient(FakeClock())
+    client._clock = lambda: 0.0
+    client._sleep = tracked_sleep
+    client.get_statement("initial", 0, 1)
+
+    def request_statement(account_id: str) -> None:
+        start.wait()
+        client.get_statement(account_id, 0, 1)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(request_statement, "white-id"),
+            executor.submit(request_statement, "black-id"),
+        ]
+        start.wait()
+        for future in futures:
+            future.result()
+
+    assert max_active_sleeps == 1
