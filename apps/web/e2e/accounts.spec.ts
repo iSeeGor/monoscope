@@ -22,7 +22,7 @@ test('loads a FOP statement only after an explicit request', async ({ page }) =>
       contentType: 'application/json',
       body: JSON.stringify({
         accountId: 'fop-uah',
-        dateFrom: '2026-09-19',
+        dateFrom: '2026-10-01',
         dateTo: '2026-10-18',
         transactions: [{
           id: 'incoming-1',

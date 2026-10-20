@@ -1,5 +1,4 @@
 export const MAX_STATEMENT_DAYS = 31
-export const DEFAULT_STATEMENT_DAYS = 30
 
 export function defaultStatementRange(today = new Date()) {
   const dateTo = new Intl.DateTimeFormat('en-CA', {
@@ -8,10 +7,8 @@ export function defaultStatementRange(today = new Date()) {
     month: '2-digit',
     day: '2-digit',
   }).format(today)
-  const from = new Date(`${dateTo}T00:00:00Z`)
-  from.setUTCDate(from.getUTCDate() - (DEFAULT_STATEMENT_DAYS - 1))
   return {
-    dateFrom: from.toISOString().slice(0, 10),
+    dateFrom: `${dateTo.slice(0, 8)}01`,
     dateTo,
   }
 }

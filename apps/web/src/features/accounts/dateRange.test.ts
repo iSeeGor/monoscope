@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { defaultStatementRange, validateStatementRange } from './dateRange'
 
 describe('account statement date range', () => {
-  it('defaults to exactly 30 inclusive Kyiv calendar days', () => {
+  it('defaults to the current Kyiv calendar month', () => {
     expect(defaultStatementRange(new Date('2026-10-18T21:30:00Z'))).toEqual({
-      dateFrom: '2026-09-20',
+      dateFrom: '2026-10-01',
       dateTo: '2026-10-19',
     })
   })

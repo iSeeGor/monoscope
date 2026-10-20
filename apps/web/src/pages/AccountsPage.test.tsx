@@ -23,7 +23,7 @@ describe('AccountsPage', () => {
     const eurAccount = { ...account, id: 'fop-eur', currency: 'EUR', iban: 'UA-EUR', name: 'ФОП EUR' }
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input)
-      return new Response(JSON.stringify(url.endsWith('/accounts') ? { accounts: [eurAccount, account] } : { accountId: account.id, dateFrom: '2026-09-19', dateTo: '2026-10-18', transactions: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify(url.endsWith('/accounts') ? { accounts: [eurAccount, account] } : { accountId: account.id, dateFrom: '2026-10-01', dateTo: '2026-10-18', transactions: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
     })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderPage()
@@ -73,7 +73,7 @@ describe('AccountsPage', () => {
     vi.setSystemTime(new Date('2026-10-18T10:00:00Z'))
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = String(input)
-      return new Response(JSON.stringify(url.endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-09-19', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify(url.endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-10-01', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } })
     })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderPage()
@@ -83,7 +83,7 @@ describe('AccountsPage', () => {
     expect(await screen.findByText('ТОВ Клієнт')).toBeInTheDocument()
     expect(screen.getByText('Казначейство')).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ dateFrom: '2026-09-19', dateTo: '2026-10-18' })
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toEqual({ dateFrom: '2026-10-01', dateTo: '2026-10-18' })
 
     await user.selectOptions(screen.getByLabelText('Тип операції'), 'incoming')
     expect(screen.getByText('ТОВ Клієнт')).toBeInTheDocument()
@@ -93,7 +93,7 @@ describe('AccountsPage', () => {
 
   it('opens accessible payment details and does not refetch draft dates before apply', async () => {
     vi.setSystemTime(new Date('2026-10-18T10:00:00Z'))
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => new Response(JSON.stringify(String(input).endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-09-19', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => new Response(JSON.stringify(String(input).endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-10-01', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderPage()
     await screen.findByText('Виписку ще не завантажено')
@@ -125,7 +125,7 @@ describe('AccountsPage', () => {
 
   it('refreshes a statement when the same range is submitted again', async () => {
     vi.setSystemTime(new Date('2026-10-18T10:00:00Z'))
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => new Response(JSON.stringify(String(input).endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-09-19', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => new Response(JSON.stringify(String(input).endsWith('/accounts') ? { accounts: [account] } : { accountId: account.id, dateFrom: '2026-10-01', dateTo: '2026-10-18', transactions }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderPage()
     await screen.findByText('Виписку ще не завантажено')
